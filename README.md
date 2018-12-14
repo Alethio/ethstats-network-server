@@ -108,4 +108,4 @@ Please see [changelog](CHANGELOG.md) file for all notable changes to this projec
 
 ## License
 
-MIT © Ethstats
+MIT &copy; [Alethio](https://aleth.io)
