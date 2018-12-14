@@ -1,0 +1,18 @@
+{
+  "parser": "babel-eslint",
+  "extends": [
+    "xo-space"
+  ],
+  "plugins": [
+    "babel"
+  ],
+  "env": {
+    "mocha": true
+  },
+  "rules": {
+    "no-unused-vars": 0,
+    "capitalized-comments": 0,
+    "camelcase": 0,
+    "max-params": 0
+  }
+}

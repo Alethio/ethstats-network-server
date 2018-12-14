@@ -1,0 +1,8 @@
+.cache
+.idea
+bin
+db
+dist
+docker
+grafana
+node_modules

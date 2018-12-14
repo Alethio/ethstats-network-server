@@ -1,0 +1,37 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Compiled binary addons (http://nodejs.org/api/addons.html)
+build/Release
+
+# Dependency directories
+node_modules
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Environment Vars
+.env
+
+# Cache
+.cache
+
+# IntelliJ IDEA
+.idea
+
+# Dist files
+dist
+
+# Client configs
+config/ClientConfigs.*.js
+!config/ClientConfigs.sample.js
