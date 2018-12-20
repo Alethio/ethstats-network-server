@@ -1,7 +1,7 @@
 # ethstats-network-server
 
 > EthStats Network Server
-
+>
 > The server collects/stores/aggregates data sent through `ethstats-cli`.
 
 ## Requirements
@@ -9,17 +9,17 @@
 Lite mode:
 
 > Node.js >= 8.0 (https://nodejs.org/en/download/)
-
+>
 > NPM >= 6.0 (NPM is distributed with Node.js. For more infos see: https://www.npmjs.com/get-npm)
-
+>
 > Deepstream >= 3.1 (https://github.com/deepstreamIO/deepstream.io/releases)
-
+>
 > Redis >= 3.2 (https://redis.io/download)
 
 Cluster mode additions:
 
 > Cassandra >= 3.10 (https://cassandra.apache.org/download/)
-
+>
 > Kafka >= 0.11 (https://kafka.apache.org/downloads)
 
 ## Installation
