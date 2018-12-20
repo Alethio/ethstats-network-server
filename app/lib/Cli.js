@@ -40,16 +40,16 @@ export default class CLI {
         type: 'string',
         alias: 'a'
       },
-      light: {
+      lite: {
         type: 'boolean'
       },
-      lightApiPort: {
+      liteApiPort: {
         type: 'string'
       },
-      lightDbLimit: {
+      liteDbLimit: {
         type: 'string'
       },
-      lightDbPersist: {
+      liteDbPersist: {
         type: 'boolean'
       },
       topic: {
@@ -85,14 +85,14 @@ export default class CLI {
         --host, -H              App hostname
         --port, -p              App port (default: 3000)
         --app, -a               App name (default: server). Run specific app as separate service (Available: server|consumer|api|configurator|kohera).
-                                Recommended for cluster environments. If --light is specified, this option is ignored.
+                                Recommended for cluster environments. If --lite is specified, this option is ignored.
 
-        --light                 Run in light mode (default: off). In a single instance will be started all necessary services (server, consumer, api).
+        --lite                  Run in lite mode (default: off). In a single instance will be started all necessary services (server, consumer, api).
                                 DB will be persisted in memory, no Kafka needed for queuing and no Redis for caching.
                                 Only Deepstream is needed for real time data reporting in the front end application.
-        --light-api-port        Light mode API port (default: 3030)
-        --light-db-limit        Number of blocks to persist in memory (default: 3000).                                
-        --light-db-persist      Persist DB in Redis. This option is available only in light mode and consistent with --light-db-limit (default: off).
+        --lite-api-port         Lite mode API port (default: 3030)
+        --lite-db-limit         Number of blocks to persist in memory (default: 3000).                                
+        --lite-db-persist       Persist DB in Redis. This option is available only in lite mode and consistent with --lite-db-limit (default: off).
   
       Consumer
         --topic, -t             Topic name to consume

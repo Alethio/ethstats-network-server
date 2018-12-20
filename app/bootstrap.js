@@ -69,13 +69,13 @@ const appClasses = {
   kohera: Kohera
 };
 
-if (diContainer.appConfig.LIGHT === true) {
-  diContainer.logger.echo(`Initializing light mode version ${packageJson.version}...`);
+if (diContainer.appConfig.LITE === true) {
+  diContainer.logger.echo(`Initializing lite mode version ${packageJson.version}...`);
 
   diContainer.result = new Result(diContainer);
   diContainer.mailer = new Mailer(diContainer);
 
-  if (diContainer.appConfig.LIGHT_DB_PERSIST === true) {
+  if (diContainer.appConfig.LITE_DB_PERSIST === true) {
     diContainer.logger.info('Initializing Redis...');
     diContainer.redis = new Redis({
       host: diContainer.appConfig.REDIS_HOST,

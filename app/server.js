@@ -43,7 +43,7 @@ export default class Server {
       this.log.info('Primus server initialised');
     });
 
-    if (this.appConfig.LIGHT === false) {
+    if (this.appConfig.LITE === false) {
       this.kafkaHost = diContainer.appConfig.KAFKA_HOST;
       this.kafkaClientOptions = {
         kafkaHost: this.kafkaHost
@@ -109,7 +109,7 @@ export default class Server {
   }
 
   init() {
-    if (this.appConfig.LIGHT === false) {
+    if (this.appConfig.LITE === false) {
       this.kafkaProducer.on('ready', () => {
         this.log.info(`Kafka => Connected to: ${this.kafkaHost}`);
         this.initPrimus();

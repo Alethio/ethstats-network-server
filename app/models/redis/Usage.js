@@ -27,7 +27,7 @@ export default class Usage extends AbstractModel {
         receivedTimestamp: Date.now()
       });
 
-      if (tableLength > this.appConfig.LIGHT_DB_LIMIT) {
+      if (tableLength > this.appConfig.LITE_DB_LIMIT) {
         newData.shift();
       }
 

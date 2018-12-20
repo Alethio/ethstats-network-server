@@ -6,7 +6,7 @@ export default class BlocksController extends AbstractController {
   constructor(diContainer) {
     super(diContainer);
 
-    if (this.appConfig.LIGHT === true) {
+    if (this.appConfig.LITE === true) {
       this.historyFulfilled = false;
       this.consumer = consumer(diContainer);
       this.blocksQueue = queue((block, callback) => {
@@ -145,9 +145,9 @@ export default class BlocksController extends AbstractController {
             let lastBlockNumber = (lastBlock === null) ? null : lastBlock.number;
             this.log.debug(`[${spark.id}] - Get last block from DB: ${lastBlockNumber}`);
 
-            if (this.appConfig.LIGHT === true && this.appConfig.LIGHT_DB_PERSIST === false && this.historyFulfilled === false && lastBlockNumber === null) {
+            if (this.appConfig.LITE === true && this.appConfig.LITE_DB_PERSIST === false && this.historyFulfilled === false && lastBlockNumber === null) {
               let receivedBlockNumber = parseInt(params.number, 10);
-              let historyMaxBlocks = (this.appConfig.LIGHT_DB_LIMIT >= this.appConfig.CHARTS_MAX_BLOCKS_HISTORY) ? this.appConfig.CHARTS_MAX_BLOCKS_HISTORY : this.appConfig.LIGHT_DB_LIMIT;
+              let historyMaxBlocks = (this.appConfig.LITE_DB_LIMIT >= this.appConfig.CHARTS_MAX_BLOCKS_HISTORY) ? this.appConfig.CHARTS_MAX_BLOCKS_HISTORY : this.appConfig.LITE_DB_LIMIT;
               let blocksToGet = this.lodash.range(Math.max(0, receivedBlockNumber - historyMaxBlocks), receivedBlockNumber, 1);
 
               if (blocksToGet.length) {
@@ -180,7 +180,7 @@ export default class BlocksController extends AbstractController {
   }
 
   _sendToQueue(spark, receivedBlock, lastBlock) {
-    if (this.appConfig.LIGHT === true) {
+    if (this.appConfig.LITE === true) {
       this.blocksQueue.push(receivedBlock);
     } else {
       let receivedBlockNumber = parseInt(receivedBlock.number, 10);

@@ -50,10 +50,10 @@ export default class AppConfig {
     config.APP_PORT = this._convertToInt(this.cli.flags.port || config.APP_PORT);
     config.APP_NAME = this.cli.flags.app || config.APP_NAME;
 
-    config.LIGHT = this._convertToBoolean(this.cli.flags.light || config.LIGHT);
-    config.LIGHT_API_PORT = this._convertToInt(this.cli.flags.lightApiPort || config.LIGHT_API_PORT);
-    config.LIGHT_DB_LIMIT = this._convertToInt(this.cli.flags.lightDbLimit || config.LIGHT_DB_LIMIT);
-    config.LIGHT_DB_PERSIST = this._convertToBoolean(this.cli.flags.lightDbPersist || config.LIGHT_DB_PERSIST);
+    config.LITE = this._convertToBoolean(this.cli.flags.lite || config.LITE);
+    config.LITE_API_PORT = this._convertToInt(this.cli.flags.liteApiPort || config.LITE_API_PORT);
+    config.LITE_DB_LIMIT = this._convertToInt(this.cli.flags.liteDbLimit || config.LITE_DB_LIMIT);
+    config.LITE_DB_PERSIST = this._convertToBoolean(this.cli.flags.liteDbPersist || config.LITE_DB_PERSIST);
 
     config.CONSUMER_TOPIC = this.cli.flags.topic || config.CONSUMER_TOPIC;
 
@@ -105,7 +105,7 @@ export default class AppConfig {
   }
 
   validateConfigs(config) {
-    if (!config.LIGHT && this.lodash.find(this.availableApps, {app: config.APP_NAME}) === undefined) {
+    if (!config.LITE && this.lodash.find(this.availableApps, {app: config.APP_NAME}) === undefined) {
       console.info('Invalid \'App name\'! See help bellow.');
       this.cli.showHelp();
     }

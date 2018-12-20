@@ -12,7 +12,7 @@ export default class Cache {
     key = `${this.namespace}:${key}`;
     let result = false;
 
-    if (this.appConfig.LIGHT === true && this.appConfig.LIGHT_DB_PERSIST === false) {
+    if (this.appConfig.LITE === true && this.appConfig.LITE_DB_PERSIST === false) {
       this.cacheStorage[key] = value;
       result = true;
     } else {
@@ -25,7 +25,7 @@ export default class Cache {
   async getVar(key) {
     key = `${this.namespace}:${key}`;
 
-    if (this.appConfig.LIGHT === true && this.appConfig.LIGHT_DB_PERSIST === false) {
+    if (this.appConfig.LITE === true && this.appConfig.LITE_DB_PERSIST === false) {
       return this.cacheStorage[key] === undefined ? null : this.cacheStorage[key];
     }
 
@@ -38,7 +38,7 @@ export default class Cache {
     key = `${this.namespace}:${key}`;
     let result = false;
 
-    if (this.appConfig.LIGHT === true && this.appConfig.LIGHT_DB_PERSIST === false) {
+    if (this.appConfig.LITE === true && this.appConfig.LITE_DB_PERSIST === false) {
       delete this.cacheStorage[key];
       result = true;
     } else {
@@ -49,7 +49,7 @@ export default class Cache {
   }
 
   flushDb() {
-    if (this.appConfig.LIGHT === true && this.appConfig.LIGHT_DB_PERSIST === false) {
+    if (this.appConfig.LITE === true && this.appConfig.LITE_DB_PERSIST === false) {
       this.cacheStorage = {};
     } else {
       this.redis.keys(`${this.namespace}:*`).then(keys => {

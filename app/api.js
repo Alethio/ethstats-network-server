@@ -21,7 +21,7 @@ export default class Api {
     this.apiHttpServer = http.createServer(this.expressServer);
 
     this.host = this.appConfig.APP_HOST;
-    this.port = (this.appConfig.LIGHT === true) ? this.appConfig.LIGHT_API_PORT : this.appConfig.APP_PORT;
+    this.port = (this.appConfig.LITE === true) ? this.appConfig.LITE_API_PORT : this.appConfig.APP_PORT;
 
     this.expressServer.use(bodyParser.json());
     this.expressServer.use(bodyParser.urlencoded({extended: true}));

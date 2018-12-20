@@ -15,7 +15,7 @@ export default class NodeRecoveryRequests extends AbstractModel {
       createdTimestamp: params.createdTimestamp
     });
 
-    if (tableLength > this.appConfig.LIGHT_DB_LIMIT) {
+    if (tableLength > this.appConfig.LITE_DB_LIMIT) {
       this.jsonDB[this.table].shift();
     }
 

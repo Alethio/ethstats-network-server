@@ -1,36 +1,36 @@
 version: '3.7'
 services:
   server:
-    container_name: netstats-server
-    image: alethio/netstats-server:latest
+    container_name: ethstats-network-server
+    image: alethio/ethstats-network-server:latest
     restart: always
     depends_on:
       - deepstream
-      - dashboard
     ports:
       - 127.0.0.1:3000:3000
       - 127.0.0.1:3030:3030
       - 127.0.0.1:8888:8888
     environment:
-      - LIGHT=1
-      - LIGHT_DB_PERSIST=0
+      - LITE=1
+      - LITE_DB_PERSIST=0
       - DEEPSTREAM_HOST=deepstream
-      - REDIS_HOST=redis
     command: ["./bin/app.js", "-v"]
   deepstream:
-    container_name: netstats-deepstream
+    container_name: ethstats-network-deepstream
     image: deepstreamio/deepstream.io:latest
     restart: always
     ports:
       - 127.0.0.1:6020:6020
   dashboard:
-    container_name: netstats-dashboard
-    image: alethio/netstats-dashboard:latest
+    container_name: ethstats-network-dashboard
+    image: alethio/ethstats-network-dashboard:latest
     restart: always
+    depends_on:
+      - server
     ports:
       - 127.0.0.1:80:80
     environment:
-    - NETSTATS_API_URL=http://127.0.0.1:3030/
-    - DS_URL=127.0.0.1:6020
-    - DS_USER=frontend
-    - DS_PASS=
+      - NETSTATS_API_URL=http://127.0.0.1:3030
+      - DS_URL=127.0.0.1:6020
+      - DS_USER=frontend
+      - DS_PASS=

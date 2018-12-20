@@ -56,7 +56,7 @@ export default class Blocks extends AbstractModel {
         uncleCount: params.uncleCount
       });
 
-      if (tableLength > this.appConfig.LIGHT_DB_LIMIT) {
+      if (tableLength > this.appConfig.LITE_DB_LIMIT) {
         let minBlockNumber = this.lodash.min(newData, row => {
           return row.number;
         });

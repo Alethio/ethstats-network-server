@@ -28,7 +28,7 @@ export default class AuthLogs extends AbstractModel {
         onlineTime: 0
       });
 
-      if (tableLength > this.appConfig.LIGHT_DB_LIMIT) {
+      if (tableLength > this.appConfig.LITE_DB_LIMIT) {
         newData.shift();
       }
 
