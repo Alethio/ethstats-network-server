@@ -7,6 +7,8 @@ export default class BlockTransactions extends AbstractModel {
   }
 
   async add(params) {
+    params.txHash = (params.txHash.hash === undefined) ? params.txHash : params.txHash.hash;
+
     return this.jsonDB[this.table].push({
       blockHash: params.blockHash,
       txHash: params.txHash
@@ -15,6 +17,7 @@ export default class BlockTransactions extends AbstractModel {
 
   async addBatch(blockHash, transactions) {
     transactions.forEach(txHash => {
+      txHash = (txHash.hash === undefined) ? txHash : txHash.hash;
       this.jsonDB[this.table].push({
         blockHash: blockHash,
         txHash: txHash

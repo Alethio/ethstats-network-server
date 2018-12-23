@@ -7,6 +7,8 @@ export default class BlockTransactions extends AbstractModel {
   }
 
   async add(params) {
+    params.txHash = (params.txHash.hash === undefined) ? params.txHash : params.txHash.hash;
+
     return this.redis.get(this.table).then(data => {
       let newData = (data === null) ? [] : JSON.parse(data);
       let tableLength = newData.push({
@@ -23,6 +25,7 @@ export default class BlockTransactions extends AbstractModel {
     return this.redis.get(this.table).then(data => {
       let newData = (data === null) ? [] : JSON.parse(data);
       transactions.forEach(txHash => {
+        txHash = (txHash.hash === undefined) ? txHash : txHash.hash;
         newData.push({
           blockHash: blockHash,
           txHash: txHash

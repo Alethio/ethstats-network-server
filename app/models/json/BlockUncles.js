@@ -7,6 +7,8 @@ export default class BlockUncles extends AbstractModel {
   }
 
   async add(params) {
+    params.uncleHash = (params.uncleHash.hash === undefined) ? params.uncleHash : params.uncleHash.hash;
+
     return this.jsonDB[this.table].push({
       blockHash: params.blockHash,
       uncleHash: params.uncleHash
@@ -15,6 +17,7 @@ export default class BlockUncles extends AbstractModel {
 
   async addBatch(blockHash, uncles) {
     uncles.forEach(uncleHash => {
+      uncleHash = (uncleHash.hash === undefined) ? uncleHash : uncleHash.hash;
       this.jsonDB[this.table].push({
         blockHash: blockHash,
         uncleHash: uncleHash

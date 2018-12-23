@@ -7,6 +7,8 @@ export default class BlockUncles extends AbstractModel {
   }
 
   async add(params) {
+    params.uncleHash = (params.uncleHash.hash === undefined) ? params.uncleHash : params.uncleHash.hash;
+
     return this.redis.get(this.table).then(data => {
       let newData = (data === null) ? [] : JSON.parse(data);
       let tableLength = newData.push({
@@ -23,6 +25,7 @@ export default class BlockUncles extends AbstractModel {
     return this.redis.get(this.table).then(data => {
       let newData = (data === null) ? [] : JSON.parse(data);
       uncles.forEach(uncleHash => {
+        uncleHash = (uncleHash.hash === undefined) ? uncleHash : uncleHash.hash;
         newData.push({
           blockHash: blockHash,
           uncleHash: uncleHash

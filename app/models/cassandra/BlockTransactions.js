@@ -7,6 +7,8 @@ export default class BlockTransactions extends AbstractModel {
   }
 
   add(params) {
+    params.txHash = (params.txHash.hash === undefined) ? params.txHash : params.txHash.hash;
+
     let query = 'INSERT INTO block_transactions ("blockHash", "txHash") VALUES (?, ?)';
     let queryParams = [
       params.blockHash,
@@ -22,6 +24,7 @@ export default class BlockTransactions extends AbstractModel {
     this.lodash.map(this.lodash.chunk(transactions, 100), array => {
       let queries = [];
       array.forEach(txHash => {
+        txHash = (txHash.hash === undefined) ? txHash : txHash.hash;
         queries.push({
           query: 'INSERT INTO block_transactions ("blockHash", "txHash") VALUES (?, ?)',
           params: [blockHash, txHash]

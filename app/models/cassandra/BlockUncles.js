@@ -7,6 +7,8 @@ export default class BlockUncles extends AbstractModel {
   }
 
   add(params) {
+    params.uncleHash = (params.uncleHash.hash === undefined) ? params.uncleHash : params.uncleHash.hash;
+
     let query = 'INSERT INTO block_uncles ("blockHash", "uncleHash") VALUES (?, ?)';
     let queryParams = [
       params.blockHash,
@@ -22,6 +24,7 @@ export default class BlockUncles extends AbstractModel {
     this.lodash.map(this.lodash.chunk(uncles, 100), array => {
       let queries = [];
       array.forEach(uncleHash => {
+        uncleHash = (uncleHash.hash === undefined) ? uncleHash : uncleHash.hash;
         queries.push({
           query: 'INSERT INTO block_uncles ("blockHash", "uncleHash") VALUES (?, ?)',
           params: [blockHash, uncleHash]
