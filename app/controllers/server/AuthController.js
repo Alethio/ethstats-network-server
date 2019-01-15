@@ -1,4 +1,5 @@
 import AbstractController from './AbstractController.js';
+import dictionary from '../../lib/EthonDictionary.js';
 
 export default class AuthController extends AbstractController {
   async login(spark, params) {
@@ -106,6 +107,13 @@ export default class AuthController extends AbstractController {
         params.onlineTimePercent = onlineTimePercent;
         params.firstLoginTimestamp = firstLoginTimestamp;
         this._sendNodeToDeepstream(spark, params);
+
+        let dsNodeCountId = `${this.appConfig.DEEPSTREAM_NAMESPACE}/stats/nodeCountData`;
+        this.dsDataLoader.getRecord(dsNodeCountId).whenReady(record => {
+          this.dsDataLoader.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/stats/nodeCountData`, 'nodeCountData', {
+            active: parseInt(record.get()[dictionary.nodeCountData].active, 10) + 1
+          });
+        });
 
         return responseObject;
       });

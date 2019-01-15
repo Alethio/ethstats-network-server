@@ -1,3 +1,5 @@
+import dictionary from '../../lib/EthonDictionary.js';
+
 export default class AbstractController {
   constructor(diContainer) {
     this.appConfig = diContainer.appConfig;
@@ -113,6 +115,17 @@ export default class AbstractController {
 
     this.session.setVar(spark.id, 'isLoggedIn', false);
     this.dsDataLoader.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/node/${nodeName}/nodeData`, 'nodeData.isActive', false);
+
+    let dsNodeCountId = `${this.appConfig.DEEPSTREAM_NAMESPACE}/stats/nodeCountData`;
+    this.dsDataLoader.getRecord(dsNodeCountId).whenReady(record => {
+      let activeNodeCount = parseInt(record.get()[dictionary.nodeCountData].active, 10);
+
+      if (activeNodeCount > 0) {
+        this.dsDataLoader.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/stats/nodeCountData`, 'nodeCountData', {
+          active: activeNodeCount - 1
+        });
+      }
+    });
 
     return this.models.Nodes.update({
       nodeShard: nodeName.charAt(0).toLowerCase(),

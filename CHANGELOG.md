@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.6] - 2019-01-15
+- Added CircleCI workflow to trigger docker hub build sequentially
+- Added DS record for node count
+
 ## [1.3.5] - 2018-12-20
 - Updated docker compose files
 - Updated readme file

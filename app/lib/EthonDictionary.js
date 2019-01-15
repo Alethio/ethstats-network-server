@@ -135,6 +135,7 @@ const ethonDictionary = {
   lastBlockData: 'ethstats:lastBlockData',
   averageBlockTime: 'ethstats:averageBlockTime',
   averageNetworkHashrate: 'ethstats:averageNetworkHashrate',
+  nodeCountData: 'ethstats:nodeCountData',
 
   blockTimeChartData: 'ethstats:blockTimeChartData',
   blockDifficultyChartData: 'ethstats:blockDifficultyChartData',

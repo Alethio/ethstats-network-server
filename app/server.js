@@ -318,6 +318,7 @@ export default class Server {
   }
 
   initDeepstreamData() {
+    this.dsDataLoader.initNodeCount();
     this.dsDataLoader.initLastBlock();
     this.dsDataLoader.initNodes({initDsNodesAsInactive: this.initDsNodesAsInactive});
 

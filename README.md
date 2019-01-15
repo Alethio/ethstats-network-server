@@ -1,6 +1,6 @@
 # ethstats-network-server
 
-> EthStats Network Server
+> EthStats - Network Monitor - Server
 >
 > The server collects/stores/aggregates data sent through `ethstats-cli`.
 

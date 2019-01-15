@@ -9,6 +9,19 @@ export default class DsDataLoader {
     this.result = diContainer.result;
   }
 
+  initNodeCount() {
+    let dsNodeCountId = `${this.appConfig.DEEPSTREAM_NAMESPACE}/stats/nodeCountData`;
+
+    let statsList = this.deepstream.record.getList(`${this.appConfig.DEEPSTREAM_NAMESPACE}/stats`);
+    statsList.whenReady(list => {
+      if (!list.getEntries().includes(dsNodeCountId)) {
+        list.addEntry(dsNodeCountId);
+      }
+    });
+
+    this.setRecord(dsNodeCountId, 'nodeCountData', {active: 0});
+  }
+
   initLastBlock() {
     return this.models.Blocks.getLastBlockData().then(lastBlock => {
       if (lastBlock) {
@@ -113,6 +126,10 @@ export default class DsDataLoader {
             activeNodes.push(`${this.appConfig.DEEPSTREAM_NAMESPACE}/node/${node.nodeName}`);
           });
 
+          this.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/stats/nodeCountData`, 'nodeCountData', {
+            active: activeNodes.length
+          });
+
           let currentNodes = this.deepstream.record.getList(`${this.appConfig.DEEPSTREAM_NAMESPACE}/nodes`);
           currentNodes.whenReady(list => {
             this.lodash.forEach(list.getEntries(), dsNodeId => {
@@ -162,6 +179,10 @@ export default class DsDataLoader {
       this.prometheusMetrics.ethstats_server_deepstream_requests_total.inc({topic: formattedKey}, 1, Date.now());
       this.log.debug(`Deepstream record '${recordId}' set '${formattedKey}' => ${JSON.stringify(formattedData)}`);
     });
+  }
+
+  getRecord(recordId) {
+    return this.deepstream.record.getRecord(recordId);
   }
 
   deleteRecord(recordId) {
