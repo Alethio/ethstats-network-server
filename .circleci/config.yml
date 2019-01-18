@@ -31,15 +31,18 @@ workflows:
   version: 2
   deploy:
     jobs:
-    - build:
-        filters:
-          tags:
-            only: /.*/
-    - trigger-docker-hub:
-        requires:
-        - build
-        filters:
-          tags:
-            only: /^v[0-9.]+$/
-          branches:
-            only: master
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - trigger-docker-hub:
+          requires:
+            - build
+          filters:
+            tags:
+              only:
+                - latest
+                - /^v[0-9.]+$/
+            branches:
+              only:
+                - master
