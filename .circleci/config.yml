@@ -38,10 +38,11 @@ workflows:
     - trigger-docker-hub:
         requires:
           - build
-        filters:
-          tags:
-            only: /^v[0-9.]+$/
-          branches:
-            only:
-              - master
-              - beta
+          filters:
+            tags:
+              only:
+                - latest
+                - /^v[0-9.]+$/
+            branches:
+              only:
+                - master
