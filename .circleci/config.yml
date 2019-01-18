@@ -31,13 +31,13 @@ workflows:
   version: 2
   deploy:
     jobs:
-    - build:
-        filters:
-          tags:
-            only: /.*/
-    - trigger-docker-hub:
-        requires:
-          - build
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - trigger-docker-hub:
+          requires:
+            - build
           filters:
             tags:
               only:
