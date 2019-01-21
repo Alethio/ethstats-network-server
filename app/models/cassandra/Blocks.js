@@ -219,42 +219,43 @@ export default class Blocks extends AbstractModel {
   }
 
   async update(whereParams, params) {
-    let queryFields = [];
-    let queryWhereFields = [];
-    let queryParams = [];
+    let updateFields = [];
+    let updateParams = [];
+    let whereClauseFields = [];
+    let whereClauseParams = [];
     let result = false;
 
     for (var param in params) {
       if (params[param] !== undefined) {
-        queryFields.push(`"${param}" = ?`);
-        queryParams.push(params[param]);
+        updateFields.push(`"${param}" = ?`);
+        updateParams.push(params[param]);
       }
     }
 
     for (var whereParam in whereParams) {
       if (whereParams[whereParam] !== undefined) {
-        queryWhereFields.push(`"${whereParam}" = ?`);
-        queryParams.push(whereParams[whereParam]);
+        whereClauseFields.push(`"${whereParam}" = ?`);
+        whereClauseParams.push(whereParams[whereParam]);
       }
     }
 
-    if (queryFields.length > 0) {
+    if (updateFields.length > 0) {
       let queries = [];
 
-      queryWhereFields.unshift(`"date" = ?`);
-      queryParams.unshift(this.getNumberPartitionKey(whereParams.timestamp * 1000));
+      whereClauseFields.unshift(`"date" = ?`);
+      whereClauseParams.unshift(this.getNumberPartitionKey(whereParams.timestamp * 1000));
       queries.push({
-        query: `UPDATE blocks1 SET ${queryFields.join(', ')} WHERE ${queryWhereFields.join(' AND ')}`,
-        params: this.lodash.clone(queryParams)
+        query: `UPDATE blocks1 SET ${updateFields.join(', ')} WHERE ${whereClauseFields.join(' AND ')}`,
+        params: this.lodash.clone(updateParams.concat(whereClauseParams))
       });
 
-      queryWhereFields.shift();
-      queryWhereFields.unshift(`"numberPartition" = ?`);
-      queryParams.shift();
-      queryParams.unshift(Math.floor(whereParams.number / this.numberPartitionDivider));
+      whereClauseFields.shift();
+      whereClauseFields.unshift(`"numberPartition" = ?`);
+      whereClauseParams.shift();
+      whereClauseParams.unshift(Math.floor(whereParams.number / this.numberPartitionDivider));
       queries.push({
-        query: `UPDATE blocks2 SET ${queryFields.join(', ')} WHERE ${queryWhereFields.join(' AND ')}`,
-        params: this.lodash.clone(queryParams)
+        query: `UPDATE blocks2 SET ${updateFields.join(', ')} WHERE ${whereClauseFields.join(' AND ')}`,
+        params: this.lodash.clone(updateParams.concat(whereClauseParams))
       });
 
       result = this.executeBatch(queries);
