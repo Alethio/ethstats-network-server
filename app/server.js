@@ -128,10 +128,6 @@ export default class Server {
       this.log.error(`Primus HTTP Server => ${error}`);
     });
 
-    this.primusHttpServer.on('close', () => {
-      console.log('Primus: close');
-    });
-
     this.primusServer.on('connection', spark => {
       this.log.info(`[${spark.id}] - New connection from ${spark.address.ip}`);
       this.prometheusMetrics.ethstats_server_ws_connections_count.inc();
@@ -186,7 +182,6 @@ export default class Server {
       });
 
       spark.on('end', () => {
-        console.log('Primus: end');
         this.log.info(`[${spark.id}] - Connection ended`);
         this.prometheusMetrics.ethstats_server_ws_connections_count.dec();
 
