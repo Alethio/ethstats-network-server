@@ -110,6 +110,17 @@ export default class BlocksController extends AbstractController {
     let lastBlockNumber = (lastBlock === null) ? 0 : parseInt(lastBlock.number, 10);
     let blockDifference = receivedBlockNumber - lastBlockNumber;
 
+    let debugData = {
+      nodeName,
+      receivedBlockNumber: receivedBlock.number,
+      lastBlockNumber: lastBlock.number,
+      receivedBlockHash: receivedBlock.hash,
+      receivedBlockTimestamp: receivedBlock.timestamp,
+      lastBlockTimestamp: lastBlock.timestamp,
+      blockTime: Math.max(0, parseInt(receivedBlock.timestamp, 10) - parseInt(lastBlock.timestamp, 10))
+    };
+    this.log.info('Process Block Debug => ' + JSON.stringify(debugData));
+
     if (blockDifference === 1) {
       this.log.debug(`Received block '${receivedBlockNumber}' is consecutive`);
 
@@ -131,7 +142,7 @@ export default class BlocksController extends AbstractController {
 
         let sendStatisticsToDeepstream = (receivedBlock.sendToDeepstream === undefined) ? (Math.abs(blockDifference) < this.appConfig.CHARTS_MAX_BLOCKS_HISTORY) : receivedBlock.sendToDeepstream;
 
-        return this._insertBlock(nodeName, receivedBlock, false, sendStatisticsToDeepstream, callback);
+        return this._insertBlock(nodeName, receivedBlock, (blockDifference === 0), sendStatisticsToDeepstream, callback);
       });
     }
 
