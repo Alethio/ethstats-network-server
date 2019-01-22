@@ -195,7 +195,7 @@ export default class Server {
   }
 
   handleDataTransport(spark, data) {
-    this.log.info(`[${spark.id}] - Data received on topic: ${data.topic}`);
+    this.log.info(`[${spark.id}] - Data received on topic: '${data.topic}' => message: ${JSON.stringify(data.msg)}`);
     this.controllers.AbstractController.setLastActivityTimestamp(spark);
     this.prometheusMetrics.ethstats_server_ws_messages_topic_total.inc({topic: data.topic}, 1, Date.now());
 

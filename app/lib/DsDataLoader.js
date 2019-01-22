@@ -177,7 +177,7 @@ export default class DsDataLoader {
       let formattedData = this.result.formatData(value);
       record.set(formattedKey, formattedData);
       this.prometheusMetrics.ethstats_server_deepstream_requests_total.inc({topic: formattedKey}, 1, Date.now());
-      this.log.debug(`Deepstream record '${recordId}' set '${formattedKey}' => ${JSON.stringify(formattedData)}`);
+      this.log.debug(`Deepstream record '${recordId}' set '${formattedKey}' => {...}`);
     });
   }
 

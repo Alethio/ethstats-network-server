@@ -11,14 +11,14 @@ export default class BlocksController extends AbstractController {
       if (existingBlock === false) {
         this.cache.getVar('lastBlock').then(lastCachedBlock => {
           let lastCachedBlockObject = (lastCachedBlock === null) ? null : JSON.parse(lastCachedBlock)[0];
+          this.log.debug(`Get last block from CACHE: '${lastCachedBlockObject.number}' => ${lastCachedBlock}`);
 
           if (lastCachedBlockObject === null) {
             this.models.Blocks.getLastBlockData().then(lastBlock => {
-              this.log.debug(`Get last block from DB: ${(lastBlock === null) ? null : lastBlock.number}`);
+              this.log.debug(`Get last block from DB: '${(lastBlock === null) ? null : lastBlock.number}' => ${JSON.stringify(lastBlock)}`);
               return this._processBlock(params, lastBlock, callback);
             });
           } else {
-            this.log.debug(`Get last block from CACHE: ${lastCachedBlockObject.number}`);
             return this._processBlock(params, lastCachedBlockObject, callback);
           }
         });
@@ -110,17 +110,6 @@ export default class BlocksController extends AbstractController {
     let lastBlockNumber = (lastBlock === null) ? 0 : parseInt(lastBlock.number, 10);
     let blockDifference = receivedBlockNumber - lastBlockNumber;
 
-    let debugData = {
-      nodeName,
-      receivedBlockNumber: receivedBlock.number,
-      lastBlockNumber: lastBlock.number,
-      receivedBlockHash: receivedBlock.hash,
-      receivedBlockTimestamp: receivedBlock.timestamp,
-      lastBlockTimestamp: lastBlock.timestamp,
-      blockTime: Math.max(0, parseInt(receivedBlock.timestamp, 10) - parseInt(lastBlock.timestamp, 10))
-    };
-    this.log.info('Process Block Debug => ' + JSON.stringify(debugData));
-
     if (blockDifference === 1) {
       this.log.debug(`Received block '${receivedBlockNumber}' is consecutive`);
 
@@ -205,7 +194,7 @@ export default class BlocksController extends AbstractController {
       uncleCount: params.uncles.length
     };
 
-    this.log.debug(`DB insert block => ${newBlockParams.number}`);
+    this.log.debug(`DB insert block => '${newBlockParams.number}' => ${JSON.stringify(newBlockParams)}`);
     return this.models.Blocks.add(newBlockParams).then(() => {
       this.checkIfBlockConfirmationExists(nodeName, params.hash).then(exists => {
         if (!exists) {
@@ -355,6 +344,7 @@ export default class BlocksController extends AbstractController {
 
       lastBlock = this.lodash.orderBy(lastBlock, ['rank'], ['desc']);
       this.cache.setVar('lastBlock', JSON.stringify(lastBlock), this.appConfig.CACHE_LAST_BLOCK_EXPIRE);
+      this.log.debug(`Set 'lastBlock' into CACHE: '${lastBlock[0].number}' => ${JSON.stringify(lastBlock)}`);
     });
   }
 }
