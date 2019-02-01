@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.7] - 2019-02-01
+- Added config REDIS_NAMESPACE 
+- Debug log improvements
+- CircleCI improvements
+- Other bug fixes
+
 ## [1.3.6] - 2019-01-15
 - Added CircleCI workflow to trigger docker hub build sequentially
 - Added DS record for node count
