@@ -5,7 +5,7 @@ export default class AbstractModel {
     this.log = diContainer.logger;
     this.prometheusMetrics = diContainer.prometheusMetrics;
     this.redis = diContainer.redis;
-    this.namespace = 'netstats:db';
+    this.namespace = `${this.appConfig.REDIS_NAMESPACE}:db`;
 
     this.returnObject = {
       rows: [],

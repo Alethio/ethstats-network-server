@@ -3,7 +3,7 @@ export default class Cache {
     this.appConfig = diContainer.appConfig;
     this.log = diContainer.logger;
     this.redis = diContainer.redis;
-    this.namespace = 'netstats:cache';
+    this.namespace = `${this.appConfig.REDIS_NAMESPACE}:cache`;
 
     this.cacheStorage = {};
   }
