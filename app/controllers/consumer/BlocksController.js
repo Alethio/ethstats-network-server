@@ -11,7 +11,7 @@ export default class BlocksController extends AbstractController {
       if (existingBlock === false) {
         this.cache.getVar('lastBlock').then(lastCachedBlock => {
           let lastCachedBlockObject = (lastCachedBlock === null) ? null : JSON.parse(lastCachedBlock)[0];
-          this.log.debug(`Get last block from CACHE: '${lastCachedBlockObject.number}' => ${lastCachedBlock}`);
+          this.log.debug(`Get last block from CACHE: '${(lastCachedBlockObject) ? lastCachedBlockObject.number : lastCachedBlockObject}' => ${lastCachedBlock}`);
 
           if (lastCachedBlockObject === null) {
             this.models.Blocks.getLastBlockData().then(lastBlock => {
