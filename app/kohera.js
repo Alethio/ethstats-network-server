@@ -85,7 +85,7 @@ export default class Kohera {
 
   initEventHandlers() {
     this.eventEmitter.on('checkIntervalFinished', setLastInterval => {
-      this.log.info(`Finished processing interval`);
+      this.log.info('Finished processing interval');
       this.processRuning = false;
 
       if (this.runContinuously) {
@@ -93,6 +93,7 @@ export default class Kohera {
           this.lastInterval = this.currentInterval;
           this.cache.setVar('lastIntervalCheckedByKohera', JSON.stringify(this.lastInterval), this.appConfig.CACHE_KOHERA_LAST_INTERVAL_EXPIRE);
         }
+
         if (this.largeIntervalRequested) {
           this.largeIntervalRequested = false;
           this.start();
@@ -153,7 +154,7 @@ export default class Kohera {
         }
       }
 
-      this.log.info(`Start checking DB for existing blocks`);
+      this.log.info('Start checking DB for existing blocks');
 
       let partitionCount = Object.keys(blockNumberPartitions).length;
       let existingBlocks = [];
@@ -207,7 +208,7 @@ export default class Kohera {
   }
 
   getBlocksData(blocks) {
-    this.log.info(`Start getting blocks data`);
+    this.log.info('Start getting blocks data');
 
     let blockCount = Object.keys(blocks).length;
     let startedRequestCount = 0;
@@ -247,7 +248,7 @@ export default class Kohera {
           }
 
           if (finishedRequestCount === blockCount) {
-            this.log.info(`Finished getting data`);
+            this.log.info('Finished getting data');
 
             let blocksWithoutData = [];
             Object.keys(blocks).forEach(blockNumber => {
@@ -274,7 +275,7 @@ export default class Kohera {
   }
 
   resolveBlockTime(blocks) {
-    this.log.info(`Start resolving blockTime`);
+    this.log.info('Start resolving blockTime');
 
     let blockCount = Object.keys(blocks).length;
     let finishedResolveCount = 0;
@@ -289,14 +290,14 @@ export default class Kohera {
       finishedResolveCount++;
 
       if (finishedResolveCount === blockCount) {
-        this.log.info(`Finished resolving blockTime`);
+        this.log.info('Finished resolving blockTime');
         this.sendBlocksToQueue(blocks);
       }
     });
   }
 
   sendBlocksToQueue(blocks) {
-    this.log.info(`Start sending to queue`);
+    this.log.info('Start sending to queue');
 
     let blockCount = Object.keys(blocks).length;
     let startedRequestCount = 0;
@@ -310,7 +311,7 @@ export default class Kohera {
           finishedRequestCount++;
 
           if (finishedRequestCount === blockCount) {
-            this.log.info(`Finished sending to queue`);
+            this.log.info('Finished sending to queue');
             this.eventEmitter.emit('checkIntervalFinished', true);
           }
         });

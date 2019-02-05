@@ -118,7 +118,7 @@ export default class Blocks extends AbstractModel {
    */
   getBlock(params) {
     let numberPartition = Math.floor(params.number / this.numberPartitionDivider);
-    let query = `SELECT * FROM blocks2 WHERE "numberPartition" = ? and "number" = ?`;
+    let query = 'SELECT * FROM blocks2 WHERE "numberPartition" = ? and "number" = ?';
     let queryParams = [numberPartition, params.number];
 
     if (params.hash !== undefined) {
@@ -212,7 +212,7 @@ export default class Blocks extends AbstractModel {
   }
 
   getByNumberPartition(numberPartition) {
-    let query = `SELECT * FROM blocks2 WHERE "numberPartition" = ?`;
+    let query = 'SELECT * FROM blocks2 WHERE "numberPartition" = ?';
     let queryParams = [numberPartition];
 
     return this.executeQuery(query, queryParams);
@@ -242,7 +242,7 @@ export default class Blocks extends AbstractModel {
     if (updateFields.length > 0) {
       let queries = [];
 
-      whereClauseFields.unshift(`"date" = ?`);
+      whereClauseFields.unshift('"date" = ?');
       whereClauseParams.unshift(this.getNumberPartitionKey(whereParams.timestamp * 1000));
       queries.push({
         query: `UPDATE blocks1 SET ${updateFields.join(', ')} WHERE ${whereClauseFields.join(' AND ')}`,
@@ -250,7 +250,7 @@ export default class Blocks extends AbstractModel {
       });
 
       whereClauseFields.shift();
-      whereClauseFields.unshift(`"numberPartition" = ?`);
+      whereClauseFields.unshift('"numberPartition" = ?');
       whereClauseParams.shift();
       whereClauseParams.unshift(Math.floor(whereParams.number / this.numberPartitionDivider));
       queries.push({

@@ -43,6 +43,7 @@ export default class Result {
           resultArray.push(value[i]);
         }
       }
+
       result = resultArray;
     } else if (this.lodash.isObject(value)) {
       if (this.bigNumberUtils.isLong(value)) {

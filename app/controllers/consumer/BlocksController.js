@@ -206,6 +206,7 @@ export default class BlocksController extends AbstractController {
         this._setLastBlock(newBlockParams);
         this._sendLastBlockToDeepstream(newBlockParams);
       }
+
       if (sendStatisticsToDeepstream) {
         this.statistics.sendToDeepstream(newBlockParams.number, newBlockParams.date);
       }

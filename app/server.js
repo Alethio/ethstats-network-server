@@ -145,6 +145,7 @@ export default class Server {
           if (this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
             this.session.setVar(spark.id, 'rateLimitLastOccurence', null);
           }
+
           this.handleDataTransport(spark, this.checkBackwardsCompatibility(spark, data));
         } else if (!this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
           this.session.setVar(spark.id, 'rateLimitLastOccurence', Date.now());
@@ -160,6 +161,7 @@ export default class Server {
           if (this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
             this.session.setVar(spark.id, 'rateLimitLastOccurence', null);
           }
+
           this.handleCustomRequestTransport(spark, data, done);
         } else if (!this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
           this.session.setVar(spark.id, 'rateLimitLastOccurence', Date.now());
@@ -272,6 +274,7 @@ export default class Server {
         this.controllers.AbstractController.clientWrite(spark, 'node-pong', {clientTime, serverTime: Date.now()});
         break;
       }
+
       case 'latency':
         this.session.setVar(spark.id, 'latency', data.msg.latency);
         this.controllers.AbstractController.sendLatencyToDeepstream(spark);

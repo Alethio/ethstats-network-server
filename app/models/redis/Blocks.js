@@ -57,18 +57,18 @@ export default class Blocks extends AbstractModel {
       });
 
       if (tableLength > this.appConfig.LITE_DB_LIMIT) {
-        let minBlockNumber = this.lodash.min(newData, row => {
-          return row.number;
-        });
+        let oldestBlockNumber = this.lodash.minBy(newData, 'number').number;
+        let blocksToRemove = this.lodash.filter(newData, {number: oldestBlockNumber});
+        let hashesToRemove = this.lodash.map(blocksToRemove, this.lodash.property('hash'));
 
         this.lodash.remove(newData, row => {
-          return row.number === minBlockNumber.number;
+          return row.number === oldestBlockNumber;
         });
 
         return Promise.all([
-          this.removeBlockConfirmations(minBlockNumber),
-          this.removeBlockTransactions(minBlockNumber),
-          this.removeBlockUncles(minBlockNumber)
+          this.removeBlockConfirmations(oldestBlockNumber),
+          this.removeBlockTransactions(hashesToRemove),
+          this.removeBlockUncles(hashesToRemove)
         ]).then(() => {
           return this.redis.set(this.table, JSON.stringify(newData)).then(() => {
             return newData.length;
@@ -185,39 +185,39 @@ export default class Blocks extends AbstractModel {
     });
   }
 
-  removeBlockConfirmations(block) {
-    return this.redis.get(`${this.namespace}.block_confirmations`).then(data => {
+  removeBlockConfirmations(blockNumber) {
+    return this.redis.get(`${this.namespace}:block_confirmations`).then(data => {
       let newData = (data === null) ? [] : JSON.parse(data);
       this.lodash.remove(newData, row => {
-        return row.number === block.number && row.hash === block.hash;
+        return row.blockNumber === blockNumber;
       });
       return newData;
     }).then(newData => {
-      return this.redis.set(`${this.namespace}.block_confirmations`, JSON.stringify(newData));
+      return this.redis.set(`${this.namespace}:block_confirmations`, JSON.stringify(newData));
     });
   }
 
-  removeBlockTransactions(block) {
-    return this.redis.get(`${this.namespace}.block_transactions`).then(data => {
+  removeBlockTransactions(blockHashes) {
+    return this.redis.get(`${this.namespace}:block_transactions`).then(data => {
       let newData = (data === null) ? [] : JSON.parse(data);
       this.lodash.remove(newData, row => {
-        return row.hash === block.hash;
+        return blockHashes.includes(row.blockHash);
       });
       return newData;
     }).then(newData => {
-      return this.redis.set(`${this.namespace}.block_transactions`, JSON.stringify(newData));
+      return this.redis.set(`${this.namespace}:block_transactions`, JSON.stringify(newData));
     });
   }
 
-  removeBlockUncles(block) {
-    return this.redis.get(`${this.namespace}.block_uncles`).then(data => {
+  removeBlockUncles(blockHashes) {
+    return this.redis.get(`${this.namespace}:block_uncles`).then(data => {
       let newData = (data === null) ? [] : JSON.parse(data);
       this.lodash.remove(newData, row => {
-        return row.hash === block.hash;
+        return blockHashes.includes(row.blockHash);
       });
       return newData;
     }).then(newData => {
-      return this.redis.set(`${this.namespace}.block_uncles`, JSON.stringify(newData));
+      return this.redis.set(`${this.namespace}:block_uncles`, JSON.stringify(newData));
     });
   }
 

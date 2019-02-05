@@ -13,6 +13,8 @@
     "no-unused-vars": 0,
     "capitalized-comments": 0,
     "camelcase": 0,
-    "max-params": 0
+    "max-params": 0,
+    "complexity": 0,
+    "max-depth": 0
   }
 }

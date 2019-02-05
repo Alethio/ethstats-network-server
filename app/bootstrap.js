@@ -115,6 +115,7 @@ if (diContainer.appConfig.LITE === true) {
   diContainer.logger.info('Initializing Cassandra...');
   diContainer.dbClient = new Cassandra.Client({
     contactPoints: diContainer.appConfig.CASSANDRA_HOSTS.split(','),
+    localDataCenter: diContainer.appConfig.CASSANDRA_LOCAL_DATA_CENTER,
     keyspace: diContainer.appConfig.CASSANDRA_KEYSPACE
   });
 
