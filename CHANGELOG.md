@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.8] - 2019-02-05
+- Fixed blocks persistence for lite mode
+- Updated dependencies to latest versions
+- Added config CASSANDRA_LOCAL_DATA_CENTER
+- Fixed linting issues 
+
 ## [1.3.7] - 2019-02-01
 - Added config REDIS_NAMESPACE 
 - Debug log improvements
