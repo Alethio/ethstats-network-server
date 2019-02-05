@@ -55,24 +55,24 @@ export default class Blocks extends AbstractModel {
     });
 
     if (tableLength > this.appConfig.LITE_DB_LIMIT) {
-      let minBlockNumber = this.lodash.min(this.jsonDB[this.table], row => {
-        return row.number;
-      });
+      let oldestBlockNumber = this.lodash.minBy(this.jsonDB[this.table], 'number').number;
+      let blocksToRemove = this.lodash.filter(this.jsonDB[this.table], {number: oldestBlockNumber});
+      let hashesToRemove = this.lodash.map(blocksToRemove, this.lodash.property('hash'));
 
       this.lodash.remove(this.jsonDB[this.table], row => {
-        return row.number === minBlockNumber.number;
+        return row.number === oldestBlockNumber;
       });
 
       this.lodash.remove(this.jsonDB.block_confirmations, row => {
-        return row.number === minBlockNumber.number && row.hash === minBlockNumber.hash;
+        return row.blockNumber === oldestBlockNumber;
       });
 
       this.lodash.remove(this.jsonDB.block_transactions, row => {
-        return row.hash === minBlockNumber.hash;
+        return hashesToRemove.includes(row.blockHash);
       });
 
       this.lodash.remove(this.jsonDB.block_uncles, row => {
-        return row.hash === minBlockNumber.hash;
+        return hashesToRemove.includes(row.blockHash);
       });
     }
 
