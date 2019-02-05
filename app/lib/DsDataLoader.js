@@ -53,6 +53,7 @@ export default class DsDataLoader {
           if (params.initDsNodesAsInactive) {
             data.rows[i].isActive = false;
           }
+
           nodePromises.push(this._getNodeData(data.rows[i]));
         }
 

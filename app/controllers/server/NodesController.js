@@ -258,6 +258,7 @@ export default class NodesController extends AbstractController {
 
         return result;
       };
+
       let recoveryHashes = [];
 
       this.lodash.each(nodes, nodeData => {
