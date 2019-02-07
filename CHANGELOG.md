@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.9] - 2019-02-07
+- Update docker compose to use custom nginx config
+
 ## [1.3.8] - 2019-02-05
 - Fixed blocks persistence for lite mode
 - Updated dependencies to latest versions
