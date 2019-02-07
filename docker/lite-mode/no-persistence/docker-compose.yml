@@ -27,6 +27,8 @@ services:
     restart: always
     depends_on:
       - server
+    volumes:
+      - ../../config/nginx/conf.d:/etc/nginx/conf.d
     ports:
       - 127.0.0.1:80:80
     environment:
