@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.3.10] - 2019-02-15
 - Fixed bug when Deepstream is restoring data on crash/restart
+- Added server urls testnets Rinkeby and Goerli 
 
 ## [1.3.9] - 2019-02-07
 - Update docker compose to use custom nginx config
