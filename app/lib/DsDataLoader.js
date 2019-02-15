@@ -9,7 +9,7 @@ export default class DsDataLoader {
     this.result = diContainer.result;
   }
 
-  initNodeCount() {
+  initNodeCount(params) {
     let dsNodeCountId = `${this.appConfig.DEEPSTREAM_NAMESPACE}/stats/nodeCountData`;
 
     let statsList = this.deepstream.record.getList(`${this.appConfig.DEEPSTREAM_NAMESPACE}/stats`);
@@ -19,7 +19,17 @@ export default class DsDataLoader {
       }
     });
 
-    this.setRecord(dsNodeCountId, 'nodeCountData', {active: 0});
+    if (params.resetDsData) {
+      this.setRecord(dsNodeCountId, 'nodeCountData', {active: 0});
+    } else {
+      this.models.Nodes.getAllActive().then(result => {
+        if (result.rowLength > 0) {
+          this.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/stats/nodeCountData`, 'nodeCountData', {
+            active: result.rowLength
+          });
+        }
+      });
+    }
   }
 
   initLastBlock() {
@@ -50,7 +60,7 @@ export default class DsDataLoader {
 
       if (data && data.rowLength > 0) {
         for (let i = 0; i < data.rowLength; i++) {
-          if (params.initDsNodesAsInactive) {
+          if (params.resetDsData) {
             data.rows[i].isActive = false;
           }
 
