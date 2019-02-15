@@ -17,7 +17,7 @@ import controllers from './controllers/server/index.js';
 
 export default class Server {
   constructor(diContainer) {
-    this.initDsNodesAsInactive = true;
+    this.resetDsData = true;
     this.appConfig = diContainer.appConfig;
     this.log = diContainer.logger;
     this.lodash = diContainer.lodash;
@@ -92,8 +92,10 @@ export default class Server {
     this.deepstream.on('connectionStateChanged', state => {
       if (state === 'OPEN') {
         this.log.info(`Deepstream => Connected to: ${this.deepstreamConfig.host}:${this.deepstreamConfig.port}`);
-        this.log.info('Deepstream => Restoring data');
-        this.initDeepstreamData();
+        setTimeout(() => {
+          this.log.info('Deepstream => Restoring data');
+          this.initDeepstreamData();
+        }, 500);
       }
     });
     this.deepstream.on('error', error => {
@@ -321,11 +323,11 @@ export default class Server {
   }
 
   initDeepstreamData() {
-    this.dsDataLoader.initNodeCount();
+    this.dsDataLoader.initNodeCount({resetDsData: this.resetDsData});
     this.dsDataLoader.initLastBlock();
-    this.dsDataLoader.initNodes({initDsNodesAsInactive: this.initDsNodesAsInactive});
+    this.dsDataLoader.initNodes({resetDsData: this.resetDsData});
 
-    this.initDsNodesAsInactive = false;
+    this.resetDsData = false;
 
     this.models.Blocks.getLastBlockNumber().then(lastBlockNumber => {
       if (lastBlockNumber !== null) {
