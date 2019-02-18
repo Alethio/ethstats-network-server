@@ -38,6 +38,14 @@ export default class ConfigsController extends AbstractController {
       return response.status(responseObject.statusCode).json(responseObject);
     }
 
+    let dashboardUrlBackwardsCompatibility = false;
+    if (configName === 'dashboardUrl' && this.lodash.isEmpty(configParams)) {
+      dashboardUrlBackwardsCompatibility = true;
+      configParams = {
+        networkName: 'mainnet'
+      };
+    }
+
     if (!this.lodash.isEmpty(configParams)) {
       result = this.lodash.find(clientConfigs[configName], configParams);
 
@@ -47,6 +55,10 @@ export default class ConfigsController extends AbstractController {
         responseObject.body.errors.push(`Config param '${JSON.stringify(configParams)}' does not exist`);
 
         return response.status(responseObject.statusCode).json(responseObject);
+      }
+
+      if (result && dashboardUrlBackwardsCompatibility) {
+        result = result.url;
       }
     }
 

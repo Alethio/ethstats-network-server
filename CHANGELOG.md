@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.11] - 2019-02-18
+- Added configurable dashboard url depending on the network 
+
 ## [1.3.10] - 2019-02-15
 - Fixed bug when Deepstream is restoring data on crash/restart
 - Added server urls testnets Rinkeby and Goerli 
