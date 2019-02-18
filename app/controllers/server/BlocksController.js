@@ -122,6 +122,10 @@ export default class BlocksController extends AbstractController {
         }
       }
     };
+    requestValidation.rinkeby = requestValidation.mainnet;
+    requestValidation.goerli = requestValidation.mainnet;
+    requestValidation.kovan = requestValidation.mainnet;
+    requestValidation.ropsten = requestValidation.mainnet;
 
     let validParams = this.validator.validate(requestValidation[this.appConfig.NETWORK].request, params);
     if (!validParams) {
