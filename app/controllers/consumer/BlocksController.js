@@ -68,7 +68,7 @@ export default class BlocksController extends AbstractController {
           this.bigNumberUtils.getInt(block.gasUsed) === this.bigNumberUtils.getInt(foundBlock.gasUsed) &&
           block.hash.toLowerCase() === foundBlock.hash.toLowerCase() &&
           // block.logsBloom.toLowerCase() === foundBlock.logsBloom.toLowerCase() &&
-          block.miner.toLowerCase() === foundBlock.miner.toLowerCase() &&
+          // block.miner.toLowerCase() === foundBlock.miner.toLowerCase() &&
           // block.mixHash.toLowerCase() === foundBlock.mixHash.toLowerCase() &&
           // block.nonce.toLowerCase() === foundBlock.nonce.toLowerCase() &&
           this.bigNumberUtils.getInt(block.number) === this.bigNumberUtils.getInt(foundBlock.number) &&
