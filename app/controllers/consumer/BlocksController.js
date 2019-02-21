@@ -46,6 +46,7 @@ export default class BlocksController extends AbstractController {
               parentHash: params.parentHash,
               receivedTimestamp: params.receivedTimestamp,
               blockTime: params.blockTime,
+              timestamp: params.timestamp,
               rank: 0
             };
 
