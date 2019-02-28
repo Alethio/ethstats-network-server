@@ -127,6 +127,12 @@ export default class BlocksController extends AbstractController {
     requestValidation.kovan = requestValidation.mainnet;
     requestValidation.ropsten = requestValidation.mainnet;
 
+    // Nethermind sends the transactions hashes in the block header as "transactionHashes"
+    // It should be "transactions" like the rest of the nodes (Geth / Parity / Pantheon)
+    if (params.transactionHashes !== undefined) {
+      params.transactions = params.transactionHashes;
+    }
+
     let validParams = this.validator.validate(requestValidation[this.appConfig.NETWORK].request, params);
     if (!validParams) {
       responseObject.success = false;
