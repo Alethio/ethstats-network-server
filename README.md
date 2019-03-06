@@ -84,8 +84,8 @@ To update the server just do a "git pull" and restart the app.
 In lite mode the total number of blocks persisted is by default 3000. See `--lite-db-limit` option if custom value is needed.
 
 There are 2 ways to start the server in lite mode.
- - No persistence - in case of a crash/restart the gathered data is lost.
- - With persistence - in case of a crash/resstart the gathered data is persisted into Redis.
+ - Memory persistence - in case of a crash/restart the gathered data is lost.
+ - Redis persistence - in case of a crash/resstart the gathered data is persisted into Redis.
 
 Lite mode will use the default settings and some 3rd party dependent services like: Deepstream, Dashboard or Redis depending on the persistence needs.
 For more details on the default settings see [.env.sample](https://github.com/Alethio/ethstats-network-server/tree/master/.env.sample).
