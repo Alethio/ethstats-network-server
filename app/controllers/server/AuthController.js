@@ -85,7 +85,7 @@ export default class AuthController extends AbstractController {
         }, {
           isActive: true,
           lastIp: lastIp,
-          lastLoginTimestamp: loginTimestamp
+          lastLoginTimestamp: new Date(loginTimestamp).toISOString()
         }),
         this.models.AuthLogs.get({nodeName: nodeName, order: 'asc', limit: 1})
       ];

@@ -132,13 +132,13 @@ export default class AbstractController {
       nodeName: nodeName
     }, {
       isActive: false,
-      lastLogoutTimestamp: logoutTimestamp
+      lastLogoutTimestamp: new Date(logoutTimestamp).toISOString()
     }).then(() => {
       return this.models.AuthLogs.update({
         nodeName: nodeName,
-        loginTimestamp: lastLoginTimestamp
+        loginTimestamp: new Date(lastLoginTimestamp).toISOString()
       }, {
-        logoutTimestamp: logoutTimestamp,
+        logoutTimestamp: new Date(logoutTimestamp).toISOString(),
         onlineTime: sessionOnlineTime
       });
     }).then(() => {
@@ -170,7 +170,7 @@ export default class AbstractController {
           nodeShard: nodeName.charAt(0).toLowerCase(),
           nodeName: nodeName
         }, {
-          lastActivityTimestamp: currentTimestamp,
+          lastActivityTimestamp: new Date(currentTimestamp).toISOString(),
           totalOnlineTime: totalOnlineTime.toString(10)
         });
       }

@@ -8,6 +8,7 @@ import meow from 'meow';
 import chalk from 'chalk';
 import sprintfJS from 'sprintf-js';
 import Cassandra from 'cassandra-driver';
+import Postgres from 'pg';
 import Redis from 'ioredis';
 import geoIp from 'geoip-lite';
 import * as d3 from 'd3';
@@ -19,6 +20,7 @@ import Configurator from './configurator.js';
 import Kohera from './kohera.js';
 
 import cassandraModels from './models/cassandra/index.js';
+import postgresModels from './models/postgres/index.js';
 import jsonModels from './models/json/index.js';
 import redisModels from './models/redis/index.js';
 
@@ -112,46 +114,83 @@ if (diContainer.appConfig.LITE === true) {
   diContainer.result = new Result(diContainer);
   diContainer.mailer = new Mailer(diContainer);
 
-  diContainer.logger.info('Initializing Cassandra...');
-  diContainer.dbClient = new Cassandra.Client({
-    contactPoints: diContainer.appConfig.CASSANDRA_HOSTS.split(','),
-    localDataCenter: diContainer.appConfig.CASSANDRA_LOCAL_DATA_CENTER,
-    keyspace: diContainer.appConfig.CASSANDRA_KEYSPACE
-  });
-
-  diContainer.dbClient.connect().then(() => {
-    diContainer.logger.info(`Cassandra => Connected to cluster with ${diContainer.dbClient.hosts.length} host(s): ${diContainer.appConfig.CASSANDRA_HOSTS}`);
-    diContainer.dbClient.hosts.forEach(host => {
-      diContainer.logger.info(`Cassandra => Host ${host.address} v${host.cassandraVersion} on rack ${host.rack}, dc ${host.datacenter}, isUp: ${host.isUp()}`);
+  const connectToCassandra = () => {
+    diContainer.logger.info('Initializing Cassandra...');
+    diContainer.dbClient = new Cassandra.Client({
+      contactPoints: diContainer.appConfig.CASSANDRA_HOSTS.split(','),
+      localDataCenter: diContainer.appConfig.CASSANDRA_LOCAL_DATA_CENTER,
+      keyspace: diContainer.appConfig.CASSANDRA_KEYSPACE
     });
-    return true;
-  }).catch(error => {
-    diContainer.logger.error('Cassandra => ' + error.message);
-    diContainer.dbClient.shutdown();
-    process.exit(1);
-    return false;
-  }).then(cassandraIsReady => {
-    if (cassandraIsReady) {
-      diContainer.logger.info('Initializing Redis...');
-      diContainer.redis = new Redis({
-        host: diContainer.appConfig.REDIS_HOST,
-        port: diContainer.appConfig.REDIS_PORT
-      });
 
-      diContainer.redis.on('connect', () => {
-        diContainer.logger.info(`Redis => Connected to ${diContainer.appConfig.REDIS_HOST}:${diContainer.appConfig.REDIS_PORT}`);
-        diContainer.cache = new Cache(diContainer);
+    return diContainer.dbClient.connect().then(() => {
+      diContainer.logger.info(`Cassandra => Connected to cluster with ${diContainer.dbClient.hosts.length} host(s): ${diContainer.appConfig.CASSANDRA_HOSTS}`);
+      diContainer.dbClient.hosts.forEach(host => {
+        diContainer.logger.info(`Cassandra => Host ${host.address} v${host.cassandraVersion} on rack ${host.rack}, dc ${host.datacenter}, isUp: ${host.isUp()}`);
+      });
+      return true;
+    }).catch(error => {
+      diContainer.logger.error('Cassandra => ' + error.message);
+      diContainer.dbClient.shutdown();
+      process.exit(1);
+      return false;
+    });
+  };
+
+  const connectToPostgres = () => {
+    diContainer.logger.info('Initializing Postgres...');
+    diContainer.dbClient = new Postgres.Client();
+
+    return diContainer.dbClient.connect().then(() => {
+      diContainer.logger.info(`Postgres => Connected to: ${diContainer.appConfig.PGHOST}:${diContainer.appConfig.PGPORT}`);
+      return true;
+    }).catch(error => {
+      diContainer.logger.error('Postgres => ' + error.message);
+      diContainer.dbClient.end();
+      process.exit(1);
+      return false;
+    });
+  };
+
+  const initApp = () => {
+    diContainer.logger.info('Initializing Redis...');
+    diContainer.redis = new Redis({
+      host: diContainer.appConfig.REDIS_HOST,
+      port: diContainer.appConfig.REDIS_PORT
+    });
+
+    diContainer.redis.on('connect', () => {
+      diContainer.logger.info(`Redis => Connected to: ${diContainer.appConfig.REDIS_HOST}:${diContainer.appConfig.REDIS_PORT}`);
+      diContainer.cache = new Cache(diContainer);
+
+      if (diContainer.appConfig.DB_TYPE === 'cassandra') {
         diContainer.models = cassandraModels(diContainer);
-        diContainer.kafkaUtils = new KafkaUtils(diContainer);
+      } else {
+        diContainer.models = postgresModels(diContainer);
+      }
 
-        const app = new appClasses[diContainer.appConfig.APP_NAME](diContainer);
-      });
+      diContainer.kafkaUtils = new KafkaUtils(diContainer);
 
-      diContainer.redis.on('error', error => {
-        diContainer.logger.error('Redis => ' + error);
-        diContainer.dbClient.shutdown();
-        process.exit(1);
-      });
-    }
-  });
+      const app = new appClasses[diContainer.appConfig.APP_NAME](diContainer);
+    });
+
+    diContainer.redis.on('error', error => {
+      diContainer.logger.error('Redis => ' + error);
+      diContainer.dbClient.shutdown();
+      process.exit(1);
+    });
+  };
+
+  if (diContainer.appConfig.DB_TYPE === 'cassandra') {
+    connectToCassandra().then(isReady => {
+      if (isReady) {
+        initApp();
+      }
+    });
+  } else {
+    connectToPostgres().then(isReady => {
+      if (isReady) {
+        initApp();
+      }
+    });
+  }
 }

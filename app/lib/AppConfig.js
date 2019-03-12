@@ -13,6 +13,11 @@ export default class AppConfig {
       {app: 'kohera'}
     ];
 
+    this.availableDBTypes = [
+      {type: 'cassandra'},
+      {type: 'pg'}
+    ];
+
     let _config = this.initConfigs(this.lodash.cloneDeep(process.env));
     this.validateConfigs(_config);
 
@@ -105,6 +110,11 @@ export default class AppConfig {
   }
 
   validateConfigs(config) {
+    if (!config.LITE && this.lodash.find(this.availableDBTypes, {type: config.DB_TYPE}) === undefined) {
+      console.info('Invalid \'DB type\'!');
+      process.exit(1);
+    }
+
     if (!config.LITE && this.lodash.find(this.availableApps, {app: config.APP_NAME}) === undefined) {
       console.info('Invalid \'App name\'! See help bellow.');
       this.cli.showHelp();
