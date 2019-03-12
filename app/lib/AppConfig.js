@@ -15,7 +15,7 @@ export default class AppConfig {
 
     this.availableDBTypes = [
       {type: 'cassandra'},
-      {type: 'pg'}
+      {type: 'postgres'}
     ];
 
     let _config = this.initConfigs(this.lodash.cloneDeep(process.env));

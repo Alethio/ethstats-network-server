@@ -1,0 +1,131 @@
+version: '3.7'
+services:
+  deepstream:
+    container_name: ethstats-network-deepstream
+    image: deepstreamio/deepstream.io:latest
+    restart: always
+    ports:
+      - 127.0.0.1:6020:6020
+  redis:
+    container_name: ethstats-network-redis
+    image: redis:alpine
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ../../../.volumes/redis:/data
+  postgres:
+    container_name: ethstats-network-postgres
+    image: postgres:11.2
+    restart: always
+    ports:
+      - 127.0.0.1:5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=
+    volumes:
+      - ../../../.volumes/postgresql:/var/lib/postgresql/data
+  server:
+    container_name: ethstats-network-server
+    image: alethio/ethstats-network-server:latest
+    restart: always
+    depends_on:
+      - deepstream
+      - redis
+      - postgres
+    ports:
+      - 127.0.0.1:3000:3000
+      - 127.0.0.1:8888:8888
+    environment:
+      - LITE=0
+      - APP_PORT=3000
+      - APP_name=server
+      - METRICS_PORT=8888
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - DEEPSTREAM_HOST=deepstream
+      - REDIS_HOST=redis
+    command: ["./bin/app.js", "-v"]
+  consumer-latest:
+    container_name: ethstats-network-consumer-latest
+    image: alethio/ethstats-network-server:latest
+    restart: always
+    depends_on:
+      - deepstream
+      - redis
+      - postgres
+      - server
+    ports:
+      - 127.0.0.1:3001:3001
+      - 127.0.0.1:8887:8887
+    environment:
+      - LITE=0
+      - APP_PORT=3001
+      - APP_name=consumer
+      - METRICS_PORT=8887
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - DEEPSTREAM_HOST=deepstream
+      - REDIS_HOST=redis
+      - CONSUMER_TOPIC=ethstats-blocks-latest
+    command: ["./bin/app.js", "-v"]
+  consumer-ancient:
+    container_name: ethstats-network-consumer-ancient
+    image: alethio/ethstats-network-server:latest
+    restart: always
+    depends_on:
+      - deepstream
+      - redis
+      - postgres
+      - server
+    ports:
+      - 127.0.0.1:3002:3002
+      - 127.0.0.1:8886:8886
+    environment:
+      - LITE=0
+      - APP_PORT=3002
+      - APP_name=consumer
+      - METRICS_PORT=8886
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - DEEPSTREAM_HOST=deepstream
+      - REDIS_HOST=redis
+      - CONSUMER_TOPIC=ethstats-blocks-ancient
+    command: ["./bin/app.js", "-v"]
+  api:
+    container_name: ethstats-network-api
+    image: alethio/ethstats-network-server:latest
+    restart: always
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - 127.0.0.1:3003:3003
+      - 127.0.0.1:8885:8885
+    environment:
+      - LITE=0
+      - APP_PORT=3003
+      - APP_name=api
+      - METRICS_PORT=8885
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - REDIS_HOST=redis
+    command: ["./bin/app.js", "-v"]
+  dashboard:
+    container_name: ethstats-network-dashboard
+    image: alethio/ethstats-network-dashboard:latest
+    restart: always
+    depends_on:
+      - server
+    volumes:
+      - ../../config/nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - 127.0.0.1:80:80
+    environment:
+      - NETSTATS_API_URL=http://127.0.0.1:3003
+      - DS_URL=127.0.0.1:6020
+      - DS_USER=frontend
+      - DS_PASS=
