@@ -1,3 +1,4 @@
+import fs from 'fs';
 import http from 'http';
 import Primus from 'primus';
 import primusResponder from 'primus-responder';
@@ -28,40 +29,6 @@ export default class Server {
 
     this.host = this.appConfig.APP_HOST;
     this.port = this.appConfig.APP_PORT;
-
-    this.primusServer = new Primus(this.primusHttpServer, {
-      transformer: 'websockets',
-      pathname: '/api',
-      parser: 'JSON',
-      pingInterval: false, // native primus ping-pong disabled for backwards compatibility => todo: enable back after updating Geth (default: 30s)
-      maxLength: 31457280,
-      plugin: {
-        responder: primusResponder
-      }
-    });
-    this.primusServer.on('initialised', () => {
-      this.log.info('Primus server initialised');
-    });
-
-    if (this.appConfig.LITE === false) {
-      this.kafkaHost = diContainer.appConfig.KAFKA_HOST;
-      this.kafkaClientOptions = {
-        kafkaHost: this.kafkaHost
-      };
-      this.kafkaProducerOptions = {
-        partitionerType: 2
-      };
-      this.kafkaProducer = new kafka.Producer(new kafka.KafkaClient(this.kafkaClientOptions), this.kafkaProducerOptions);
-      this.kafkaProducer.on('error', error => {
-        this.log.error(`Kafka => ${error.message}`);
-        this.kafkaUtils.checkErrorRate(error);
-        if (error.message.search('ECONNREFUSED') !== -1) {
-          process.exit(1);
-        }
-      });
-
-      diContainer.kafkaProducer = this.kafkaProducer;
-    }
 
     this.session = new Session(diContainer);
     diContainer.session = this.session;
@@ -102,32 +69,65 @@ export default class Server {
       this.log.error('Deepstream => ' + error);
     });
 
-    this.controllers = controllers(diContainer);
-
     this.wsRequestRateLimit = this.appConfig.WS_REQUEST_RATE_LIMIT;
     this.wsRequestRateInterval = this.appConfig.WS_REQUEST_RATE_INTERVAL;
 
-    return this.init();
+    if (this.appConfig.DB_TYPE === 'postgres') {
+      return this.checkIfPostgresTablesExists().then(() => {
+        this.init(diContainer);
+        return this.primusServer;
+      });
+    }
+
+    this.init(diContainer);
+    return this.primusServer;
   }
 
-  init() {
+  init(diContainer) {
     if (this.appConfig.LITE === false) {
+      this.kafkaHost = this.appConfig.KAFKA_HOST;
+      this.kafkaClientOptions = {
+        kafkaHost: this.kafkaHost
+      };
+      this.kafkaProducerOptions = {
+        partitionerType: 2
+      };
+      this.kafkaProducer = new kafka.Producer(new kafka.KafkaClient(this.kafkaClientOptions), this.kafkaProducerOptions);
+
+      this.kafkaProducer.on('error', error => {
+        this.log.error(`Kafka => ${error.message}`);
+        this.kafkaUtils.checkErrorRate(error);
+        if (error.message.search('ECONNREFUSED') !== -1) {
+          process.exit(1);
+        }
+      });
+
       this.kafkaProducer.on('ready', () => {
         this.log.info(`Kafka => Connected to: ${this.kafkaHost}`);
+        diContainer.kafkaProducer = this.kafkaProducer;
+        this.controllers = controllers(diContainer);
         this.initPrimus();
       });
     } else {
+      this.controllers = controllers(diContainer);
       this.initPrimus();
     }
   }
 
   initPrimus() {
-    this.primusHttpServer.listen(this.port, () => {
-      this.log.echo(`Primus HTTP Server is running on ${this.host}:${this.port}`);
+    this.primusServer = new Primus(this.primusHttpServer, {
+      transformer: 'websockets',
+      pathname: '/api',
+      parser: 'JSON',
+      pingInterval: false, // native primus ping-pong disabled for backwards compatibility => todo: enable back after updating Geth (default: 30s)
+      maxLength: 31457280,
+      plugin: {
+        responder: primusResponder
+      }
     });
 
-    this.primusHttpServer.on('error', error => {
-      this.log.error(`Primus HTTP Server => ${error}`);
+    this.primusServer.on('initialised', () => {
+      this.log.info('Primus server initialised');
     });
 
     this.primusServer.on('connection', spark => {
@@ -195,7 +195,13 @@ export default class Server {
       });
     });
 
-    return this.primusHttpServer;
+    this.primusHttpServer.listen(this.port, () => {
+      this.log.echo(`Primus HTTP Server is running on ${this.host}:${this.port}`);
+    });
+
+    this.primusHttpServer.on('error', error => {
+      this.log.error(`Primus HTTP Server => ${error}`);
+    });
   }
 
   handleDataTransport(spark, data) {
@@ -424,5 +430,25 @@ export default class Server {
     }
 
     return result;
+  }
+
+  checkIfPostgresTablesExists() {
+    return this.models.Tools.checkIfTablesExists().then(exists => {
+      let result = null;
+      if (!exists) {
+        this.log.info('Postgres DB tables not found, trying to install...');
+
+        try {
+          let installScript = fs.readFileSync(`${__dirname}/../db/postgres/install.sql`, 'utf8');
+          result = this.models.AbstractModel.executeQuery(installScript, []);
+          this.log.info('Postgres DB tables installed successfully');
+        } catch (error) {
+          this.log.error('Postgres install script not found');
+          process.exit(1);
+        }
+      }
+
+      return result;
+    });
   }
 }

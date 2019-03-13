@@ -3,9 +3,7 @@ export default diContainer => {
   let models = {};
 
   Object.keys(modules).forEach(model => {
-    if (model !== 'AbstractModel') {
-      models[model] = new modules[model](diContainer);
-    }
+    models[model] = new modules[model](diContainer);
   });
 
   return models;

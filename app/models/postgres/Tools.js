@@ -12,7 +12,6 @@ export default class Tools extends AbstractModel {
       'block_transactions',
       'block_uncles',
       'block_confirmations',
-      'block_confirmations2',
       'usage',
       'node_recovery_requests'
     ];
@@ -26,5 +25,33 @@ export default class Tools extends AbstractModel {
     }
 
     return Promise.all(results);
+  }
+
+  checkIfTablesExists() {
+    let query = `SELECT *
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name IN (
+        'nodes',
+        'connection_logs',
+        'auth_logs',
+        'syncs',
+        'stats',
+        'blocks',
+        'block_transactions',
+        'block_uncles',
+        'block_confirmations',
+        'usage',
+        'node_recovery_requests'
+    )`;
+    let queryParams = [];
+    let result = true;
+
+    return this.executeQuery(query, queryParams).then(data => {
+      if (data && data.rowLength === 0) {
+        result = false;
+      }
+
+      return result;
+    });
   }
 }
