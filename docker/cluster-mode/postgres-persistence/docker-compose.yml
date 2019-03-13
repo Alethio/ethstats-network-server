@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   zookeper1:
-    container_name: zookeper1
+    container_name: ethstats-network-zookeper1
     image: zookeeper:3.4.9
     hostname: zookeper1
     restart: always
@@ -15,7 +15,7 @@ services:
       - ../../../.volumes/zookeper1/data:/data
       - ../../../.volumes/zookeper1/datalog:/datalog
   kafka1:
-    container_name: kafka1
+    container_name: ethstats-network-kafka1
     image: confluentinc/cp-kafka:5.0.0
     hostname: kafka1
     restart: always
@@ -72,12 +72,13 @@ services:
     environment:
       - LITE=0
       - APP_PORT=3000
-      - APP_name=server
+      - APP_NAME=server
       - METRICS_PORT=8888
       - DB_TYPE=postgres
       - PGHOST=postgres
       - PGDATABASE=postgres
-      - KAFKA_HOST=127.0.0.1:9092
+      - PGUSER=postgres
+      - KAFKA_HOST=kafka1:9092
       - DEEPSTREAM_HOST=deepstream
       - REDIS_HOST=redis
     command: ["./bin/app.js", "-v"]
@@ -97,12 +98,13 @@ services:
     environment:
       - LITE=0
       - APP_PORT=3001
-      - APP_name=consumer
+      - APP_NAME=consumer
       - METRICS_PORT=8887
       - DB_TYPE=postgres
       - PGHOST=postgres
       - PGDATABASE=postgres
-      - KAFKA_HOST=127.0.0.1:9092
+      - PGUSER=postgres
+      - KAFKA_HOST=kafka1:9092
       - DEEPSTREAM_HOST=deepstream
       - REDIS_HOST=redis
       - CONSUMER_TOPIC=ethstats-blocks-latest
@@ -123,13 +125,14 @@ services:
     environment:
       - LITE=0
       - APP_PORT=3002
-      - APP_name=consumer
+      - APP_NAME=consumer
       - METRICS_PORT=8886
       - DB_TYPE=postgres
       - PGHOST=postgres
       - PGDATABASE=postgres
+      - PGUSER=postgres
       - DEEPSTREAM_HOST=deepstream
-      - KAFKA_HOST=127.0.0.1:9092
+      - KAFKA_HOST=kafka1:9092
       - REDIS_HOST=redis
       - CONSUMER_TOPIC=ethstats-blocks-ancient
     command: ["./bin/app.js", "-v"]
@@ -146,11 +149,12 @@ services:
     environment:
       - LITE=0
       - APP_PORT=3003
-      - APP_name=api
+      - APP_NAME=api
       - METRICS_PORT=8885
       - DB_TYPE=postgres
       - PGHOST=postgres
       - PGDATABASE=postgres
+      - PGUSER=postgres
       - REDIS_HOST=redis
     command: ["./bin/app.js", "-v"]
   dashboard:
