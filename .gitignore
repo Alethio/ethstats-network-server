@@ -26,6 +26,9 @@ node_modules
 # Cache
 .cache
 
+# Docker Volumes
+.volumes
+
 # IntelliJ IDEA
 .idea
 
