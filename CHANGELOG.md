@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2019-03-14
+- Add support for PostgreSQL
+- Add docker compose example for cluster mode with PostgreSQL persistence
+- Auto install the PostgreSQL tables if ALL tables are not found
+- Improvement on getting transaction hashes from a Nethermind node
+- Removed miner from checking for block existence
+
 ## [1.3.11] - 2019-02-18
 - Added configurable dashboard url depending on the network
 - Updated registration email to show the network on which the node was added 
