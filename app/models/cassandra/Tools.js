@@ -8,10 +8,11 @@ export default class Tools extends AbstractModel {
       'auth_logs',
       'syncs',
       'stats',
-      'blocks',
+      'blocks1',
+      'blocks2',
       'block_transactions',
       'block_uncles',
-      'block_confirmations',
+      'block_confirmations1',
       'block_confirmations2',
       'usage',
       'node_recovery_requests'

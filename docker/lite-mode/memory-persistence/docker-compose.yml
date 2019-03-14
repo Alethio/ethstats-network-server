@@ -13,6 +13,9 @@ services:
     environment:
       - LITE=1
       - LITE_DB_PERSIST=0
+      - LITE_API_PORT=3030
+      - APP_PORT=3000
+      - METRICS_PORT=8888
       - DEEPSTREAM_HOST=deepstream
     command: ["./bin/app.js", "-v"]
   deepstream:

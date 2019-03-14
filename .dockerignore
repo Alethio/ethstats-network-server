@@ -1,6 +1,5 @@
 .git
 .idea
-db
 dist
 docker
 grafana

@@ -1,0 +1,174 @@
+version: '3.7'
+services:
+  zookeper1:
+    container_name: ethstats-network-zookeper1
+    image: zookeeper:3.4.9
+    hostname: zookeper1
+    restart: always
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181
+      ZOO_SERVERS: server.1=zookeper1:2888:3888
+    volumes:
+      - ../../../.volumes/zookeper1/data:/data
+      - ../../../.volumes/zookeper1/datalog:/datalog
+  kafka1:
+    container_name: ethstats-network-kafka1
+    image: confluentinc/cp-kafka:5.0.0
+    hostname: kafka1
+    restart: always
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka1:19092,LISTENER_DOCKER_EXTERNAL://192.168.150.5:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zookeper1:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - ../../../.volumes/kafka1/data:/var/lib/kafka/data
+    depends_on:
+      - zookeper1
+  deepstream:
+    container_name: ethstats-network-deepstream
+    image: deepstreamio/deepstream.io:latest
+    restart: always
+    ports:
+      - 127.0.0.1:6020:6020
+  redis:
+    container_name: ethstats-network-redis
+    image: redis:alpine
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ../../../.volumes/redis:/data
+  postgres:
+    container_name: ethstats-network-postgres
+    image: postgres:11.2
+    restart: always
+    ports:
+      - 127.0.0.1:5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=
+    volumes:
+      - ../../../.volumes/postgresql:/var/lib/postgresql/data
+  server:
+    container_name: ethstats-network-server
+    image: alethio/ethstats-network-server:latest
+    restart: always
+    depends_on:
+      - kafka1
+      - deepstream
+      - redis
+      - postgres
+    ports:
+      - 127.0.0.1:3000:3000
+      - 127.0.0.1:8888:8888
+    environment:
+      - LITE=0
+      - APP_PORT=3000
+      - APP_NAME=server
+      - METRICS_PORT=8888
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGUSER=postgres
+      - KAFKA_HOST=kafka1:9092
+      - DEEPSTREAM_HOST=deepstream
+      - REDIS_HOST=redis
+    command: ["./bin/app.js", "-v"]
+  consumer-latest:
+    container_name: ethstats-network-consumer-latest
+    image: alethio/ethstats-network-server:latest
+    restart: always
+    depends_on:
+      - kafka1
+      - deepstream
+      - redis
+      - postgres
+      - server
+    ports:
+      - 127.0.0.1:3001:3001
+      - 127.0.0.1:8887:8887
+    environment:
+      - LITE=0
+      - APP_PORT=3001
+      - APP_NAME=consumer
+      - METRICS_PORT=8887
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGUSER=postgres
+      - KAFKA_HOST=kafka1:9092
+      - DEEPSTREAM_HOST=deepstream
+      - REDIS_HOST=redis
+      - CONSUMER_TOPIC=ethstats-blocks-latest
+    command: ["./bin/app.js", "-v"]
+  consumer-ancient:
+    container_name: ethstats-network-consumer-ancient
+    image: alethio/ethstats-network-server:latest
+    restart: always
+    depends_on:
+      - kafka1
+      - deepstream
+      - redis
+      - postgres
+      - server
+    ports:
+      - 127.0.0.1:3002:3002
+      - 127.0.0.1:8886:8886
+    environment:
+      - LITE=0
+      - APP_PORT=3002
+      - APP_NAME=consumer
+      - METRICS_PORT=8886
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGUSER=postgres
+      - DEEPSTREAM_HOST=deepstream
+      - KAFKA_HOST=kafka1:9092
+      - REDIS_HOST=redis
+      - CONSUMER_TOPIC=ethstats-blocks-ancient
+    command: ["./bin/app.js", "-v"]
+  api:
+    container_name: ethstats-network-api
+    image: alethio/ethstats-network-server:latest
+    restart: always
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - 127.0.0.1:3003:3003
+      - 127.0.0.1:8885:8885
+    environment:
+      - LITE=0
+      - APP_PORT=3003
+      - APP_NAME=api
+      - METRICS_PORT=8885
+      - DB_TYPE=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGUSER=postgres
+      - REDIS_HOST=redis
+    command: ["./bin/app.js", "-v"]
+  dashboard:
+    container_name: ethstats-network-dashboard
+    image: alethio/ethstats-network-dashboard:latest
+    restart: always
+    depends_on:
+      - server
+    volumes:
+      - ../../config/nginx/conf.d:/etc/nginx/conf.d
+    ports:
+      - 127.0.0.1:80:80
+    environment:
+      - NETSTATS_API_URL=http://127.0.0.1:3003
+      - DS_URL=127.0.0.1:6020
+      - DS_USER=frontend
+      - DS_PASS=

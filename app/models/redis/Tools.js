@@ -12,7 +12,6 @@ export default class Tools extends AbstractModel {
       'block_transactions',
       'block_uncles',
       'block_confirmations',
-      'block_confirmations2',
       'usage',
       'node_recovery_requests'
     ];
