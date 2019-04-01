@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 import lodash from 'lodash';
 import meow from 'meow';
 import chalk from 'chalk';
-import sprintfJS from 'sprintf-js';
 import Cassandra from 'cassandra-driver';
 import Postgres from 'pg';
 import Redis from 'ioredis';
@@ -48,7 +47,6 @@ const diContainer = {
   lodash,
   meow,
   chalk,
-  sprintfJS,
   geoIp,
   d3,
   bigNumberUtils

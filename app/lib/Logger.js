@@ -2,7 +2,6 @@ export default class Logger {
   constructor(diContainer) {
     this.appConfig = diContainer.appConfig;
     this.chalk = diContainer.chalk;
-    this.sprintf = diContainer.sprintfJS.sprintf;
     this.prometheusMetrics = null;
 
     this.showDateTime = this.appConfig.LOG_SHOW_DATETIME;
@@ -15,7 +14,7 @@ export default class Logger {
 
   _log(type, string) {
     let dateTime = new Date().toISOString().replace('T', ' ').replace('Z', '');
-    let resultString = `${(this.showDateTime) ? dateTime + ' - ' : ''}%s: ${string}`;
+    let resultString = `${(this.showDateTime) ? dateTime + ' - ' : ''}%LOG-TYPE%: ${string}`;
 
     if (this.showAsJson) {
       let output = {
@@ -30,16 +29,16 @@ export default class Logger {
           console.log(string);
           break;
         case 'info':
-          console.log(this.chalk.white(this.sprintf(resultString, 'INFO')));
+          console.log(this.chalk.white(resultString.replace('%LOG-TYPE%', 'INFO')));
           break;
         case 'debug':
-          console.log(this.chalk.cyan(this.sprintf(resultString, 'DEBUG')));
+          console.log(this.chalk.cyan(resultString.replace('%LOG-TYPE%', 'DEBUG')));
           break;
         case 'warning':
-          console.log(this.chalk.yellow(this.sprintf(resultString, 'WARNING')));
+          console.log(this.chalk.yellow(resultString.replace('%LOG-TYPE%', 'WARNING')));
           break;
         case 'error':
-          console.log(this.chalk.red(this.sprintf(resultString, 'ERROR')));
+          console.log(this.chalk.red(resultString.replace('%LOG-TYPE%', 'ERROR')));
           break;
         default:
           console.log('Logger: Unknown type');
