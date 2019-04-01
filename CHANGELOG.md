@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2019-04-01
+- Remove "sprintf" npm package due to memory leaks
+- Update Infura library to use latest v3 API
+- Update npm dependent packages to latest versions
+
 ## [1.4.0] - 2019-03-14
 - Add support for PostgreSQL
 - Add docker compose example for cluster mode with PostgreSQL persistence
