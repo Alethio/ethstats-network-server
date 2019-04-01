@@ -9,25 +9,27 @@ export default class Infura {
     this.bigNumberUtils = diContainer.bigNumberUtils;
 
     this.network = this.appConfig.NETWORK;
-    this.apiUrl = this.appConfig.INFURA_API_URL;
-    this.apiKey = this.appConfig.INFURA_API_KEY;
+    this.url = this.appConfig.INFURA_URL;
+    this.projectId = this.appConfig.INFURA_PROJECT_ID;
+    this.projectSecret = this.appConfig.INFURA_PROJECT_SECRET;
   }
 
-  get(params) {
+  request(jsonRpcObject) {
     let requestOptions = {
-      method: 'GET',
-      uri: `${this.apiUrl}/${this.network}/${params.method}?token=${this.apiKey}`,
-      json: true
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(':' + this.projectSecret).toString('base64')}`
+      },
+      uri: `https://${this.network}.${this.url}/${this.projectId}`,
+      json: false,
+      body: JSON.stringify(jsonRpcObject)
     };
-
-    if (params.params) {
-      requestOptions.uri += `&params=${params.params}`;
-    }
 
     this.log.debug(`Infura request: ${JSON.stringify(requestOptions)}`);
 
     return this.requestPromise(requestOptions).then(requestResult => {
       let result = null;
+      requestResult = JSON.parse(requestResult);
 
       if (requestResult.error) {
         this.log.error(`Infura => ${requestResult.error.message}`);
@@ -37,25 +39,29 @@ export default class Infura {
 
       return result;
     }).catch(error => {
-      let errorMessage = this.lodash.isObject(error.error) ? ((error.error.body === undefined) ? error.error : error.error.body.errors[0]) : error.message;
-      this.log.error(`Infura => ${errorMessage}`);
+      this.log.error(`Infura => ${JSON.stringify(error)}`);
     });
   }
 
   getBlockByNumber(number) {
-    let requestParams = {
+    let jsonRpcObject = {
+      jsonrpc: '2.0',
       method: 'eth_getBlockByNumber',
-      params: `["${this.bigNumberUtils.getHex(number, true)}",true]`
+      params: [this.bigNumberUtils.getHex(number, true), false],
+      id: 1
     };
 
-    return this.get(requestParams);
+    return this.request(jsonRpcObject);
   }
 
   getLastBlockNumber() {
-    let requestParams = {
-      method: 'eth_blockNumber'
+    let jsonRpcObject = {
+      jsonrpc: '2.0',
+      method: 'eth_blockNumber',
+      params: [],
+      id: 1
     };
 
-    return this.get(requestParams);
+    return this.request(jsonRpcObject);
   }
 }
