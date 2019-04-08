@@ -81,7 +81,7 @@ export default class Nodes extends AbstractModel {
     return this.redis.get(this.table).then(data => {
       if (data !== null) {
         returnObject.rows = this.lodash.filter(JSON.parse(data), row => {
-          return row.isActive === true && row.lastActivityTimestamp >= Date.now() - (this.appConfig.DEEPSTREAM_NODE_ACTIVITY_RETENTION * 1000);
+          return row.isActive === true && new Date(row.lastActivityTimestamp).getTime() >= Date.now() - (this.appConfig.DEEPSTREAM_NODE_ACTIVITY_RETENTION * 1000);
         });
         returnObject.rowLength = returnObject.rows.length;
       }
