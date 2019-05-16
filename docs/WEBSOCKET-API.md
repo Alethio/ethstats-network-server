@@ -14,13 +14,13 @@ To talk to one of the EthStats servers use the following endpoints depending on 
 
 | Network     | URL                                         |
 |-------------|---------------------------------------------|
-| mainnet     | https://server.net.ethstats.io/api          |
-| rinkeby     | https://server.net.rinkeby.ethstats.io/api  |
-| goerli      | https://server.net.goerli.ethstats.io/api   |
+| mainnet     | https://server.ethstats.io/api              |
+| rinkeby     | https://server.rinkeby.ethstats.io/api      |
+| goerli      | https://server.goerli.ethstats.io/api       |
 
 Example:
 ```bash
-wscat -c https://server.net.ethstats.io/api
+wscat -c https://server.ethstats.io/api
 connected (press CTRL+C to quit)
 >
 ```
