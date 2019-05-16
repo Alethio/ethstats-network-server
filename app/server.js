@@ -29,12 +29,19 @@ export default class Server {
 
     this.host = this.appConfig.APP_HOST;
     this.port = this.appConfig.APP_PORT;
+    this.pingInterval = this.appConfig.SERVER_PING_INTERVAL;
+    this.wsTimeout = this.appConfig.SERVER_WS_TIMEOUT;
 
+    this.clients = {};
     this.session = new Session(diContainer);
     diContainer.session = this.session;
 
-    diContainer.validator = new Ajv({allErrors: true, jsonPointers: true, useDefaults: true});
-    diContainer.validatorError = new AjvError(diContainer);
+    this.validator = new Ajv({allErrors: true, jsonPointers: true, useDefaults: true});
+    this.validatorError = new AjvError(diContainer);
+
+    diContainer.validator = this.validator;
+    diContainer.validatorError = this.validatorError;
+
     diContainer.sha1 = sha1;
     diContainer.compareVersions = compareVersions;
 
@@ -119,7 +126,7 @@ export default class Server {
       transformer: 'websockets',
       pathname: '/api',
       parser: 'JSON',
-      pingInterval: false, // native primus ping-pong disabled for backwards compatibility => todo: enable back after updating Geth (default: 30s)
+      pingInterval: false, // native primus ping-pong disabled, custom ping pong implemented due to custom protocol
       maxLength: 31457280,
       plugin: {
         responder: primusResponder
@@ -128,61 +135,54 @@ export default class Server {
 
     this.primusServer.on('initialised', () => {
       this.log.info('Primus server initialised');
+
+      setInterval(() => {
+        Object.keys(this.clients).forEach(sparkId => {
+          let lastPingTimestamp = Date.now();
+          let lastActivityTimestamp = this.session.getVar(sparkId, 'lastActivityTimestamp');
+
+          if (lastPingTimestamp - lastActivityTimestamp >= (this.wsTimeout * 1000)) {
+            this.log.info(`[${sparkId}] - No response from client for more than ${this.wsTimeout} seconds, ending connection`);
+            this.clients[sparkId].end();
+          }
+
+          if (this.clients[sparkId] !== undefined && this.session.getVar(sparkId, 'isV1Client') === false) {
+            this.session.setVar(sparkId, 'lastPingTimestamp', lastPingTimestamp);
+            this.controllers.AbstractController.clientWrite(this.clients[sparkId], 'ping', {timestamp: lastPingTimestamp});
+          }
+        });
+      }, this.pingInterval * 1000);
     });
 
     this.primusServer.on('connection', spark => {
       this.log.info(`[${spark.id}] - New connection from ${spark.address.ip}`);
       this.prometheusMetrics.ethstats_server_ws_connections_count.inc();
 
+      this.clients[spark.id] = spark;
+
       this.session.setVar(spark.id, 'isLoggedIn', false);
       this.session.setVar(spark.id, 'latency', 0);
       this.session.setVar(spark.id, 'rateLimiter', new RateLimiter(this.wsRequestRateLimit, this.wsRequestRateInterval));
+      this.session.setVar(spark.id, 'lastActivityTimestamp', Date.now());
+      this.session.setVar(spark.id, 'lastSavedLastActivityTimestamp', Date.now());
 
       spark.on('error', error => {
-        this.log.error(`Primus => ${error}`);
-      });
+        this.log.error(`Primus => ${error.name}: ${error.message}`);
 
-      spark.on('data', data => {
-        if (this.session.getVar(spark.id, 'rateLimiter').accept(1)) {
-          if (this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
-            this.session.setVar(spark.id, 'rateLimitLastOccurence', null);
-          }
-
-          this.handleDataTransport(spark, this.checkBackwardsCompatibility(spark, data));
-        } else if (!this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
-          this.session.setVar(spark.id, 'rateLimitLastOccurence', Date.now());
-
+        if (error.name === 'ParserError') {
           let responseObject = this.lodash.cloneDeep(this.controllers.AbstractController.responseObject);
-          responseObject.warnings.push('WS request rate limit reached');
-          this.controllers.AbstractController.clientWrite(spark, 'requestRateLimitReached', responseObject);
+          responseObject.success = false;
+          responseObject.errors = [`${error.name}: ${error.message}`];
+          this.controllers.AbstractController.clientWrite(spark, 'invalidMessage', responseObject);
         }
       });
 
-      spark.on('request', (data, done) => {
-        if (this.session.getVar(spark.id, 'rateLimiter').accept(1)) {
-          if (this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
-            this.session.setVar(spark.id, 'rateLimitLastOccurence', null);
-          }
-
-          this.handleCustomRequestTransport(spark, data, done);
-        } else if (!this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
-          this.session.setVar(spark.id, 'rateLimitLastOccurence', Date.now());
-
-          let responseObject = this.lodash.cloneDeep(this.controllers.AbstractController.responseObject);
-          responseObject.warnings.push('WS request rate limit reached');
-          this.controllers.AbstractController.clientWrite(spark, 'requestRateLimitReached', responseObject);
-        }
+      spark.on('data', message => {
+        this.handleMessage(spark, 'data', message, {});
       });
 
-      spark.on('outgoing::ping', timestamp => {
-        this.session.setVar(spark.id, 'lastPingTimestamp', timestamp);
-      });
-
-      spark.on('incoming::pong', timestamp => {
-        if (this.session.getVar(spark.id, 'lastPingTimestamp') === timestamp) {
-          this.session.setVar(spark.id, 'lastPingTimestamp', Math.ceil((Date.now() - timestamp) / 2));
-          this.controllers.AbstractController.sendLatencyToDeepstream(spark);
-        }
+      spark.on('request', (message, done) => {
+        this.handleMessage(spark, 'request', message, done);
       });
 
       spark.on('end', () => {
@@ -192,6 +192,8 @@ export default class Server {
         this.controllers.AuthController.logout(spark).then(() => {
           this.session.delete(spark.id);
         });
+
+        delete this.clients[spark.id];
       });
     });
 
@@ -204,24 +206,99 @@ export default class Server {
     });
   }
 
-  handleDataTransport(spark, data) {
-    this.log.info(`[${spark.id}] - Data received on topic: '${data.topic}' => message: ${JSON.stringify(data.msg)}`);
-    this.controllers.AbstractController.setLastActivityTimestamp(spark);
-    this.prometheusMetrics.ethstats_server_ws_messages_topic_total.inc({topic: data.topic}, 1, Date.now());
+  handleMessage(spark, type, message, done) {
+    this.log.info(`[${spark.id}] - Message type '${type}' received on topic: '${message.topic}' => payload: ${JSON.stringify(message.payload)}`);
+    this.prometheusMetrics.ethstats_server_ws_messages_topic_total.inc({topic: message.topic}, 1, Date.now());
 
-    switch (data.topic) {
+    this.session.setVar(spark.id, 'lastActivityTimestamp', Date.now());
+    this.controllers.NodesController.saveLastActivityTimestamp(spark);
+
+    let messageValidationResult = this.validateMessage(type, this.checkBackwardsCompatibility(spark, message));
+
+    if (messageValidationResult.success === false) {
+      this.controllers.AbstractController.clientWrite(spark, 'invalidMessage', messageValidationResult);
+    } else if (this.session.getVar(spark.id, 'rateLimiter').accept(1)) {
+      if (this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
+        this.session.setVar(spark.id, 'rateLimitLastOccurence', null);
+      }
+
+      if (type === 'request') {
+        this.handleCustomRequestTransport(spark, message, done);
+      } else {
+        this.handleDataTransport(spark, message);
+      }
+    } else if (!this.session.getVar(spark.id, 'rateLimitLastOccurence')) {
+      this.session.setVar(spark.id, 'rateLimitLastOccurence', Date.now());
+
+      let responseObject = this.lodash.cloneDeep(this.controllers.AbstractController.responseObject);
+      responseObject.warnings.push('WebSocket request rate limit reached');
+      this.controllers.AbstractController.clientWrite(spark, 'requestRateLimitReached', responseObject);
+    }
+  }
+
+  validateMessage(type, message) {
+    let result = this.lodash.cloneDeep(this.controllers.AbstractController.responseObject);
+    let dataTopics = [
+      'registerNode',
+      'sendRecoveryEmail',
+      'recoverNode',
+      'login',
+      'logout',
+      'connection',
+      'block',
+      'sync',
+      'stats',
+      'usage',
+      'pong',
+      'pending',
+      'checkChainData',
+      'getBlocksData'
+    ];
+    let deprecatedTopics = ['node-ping', 'latency'];
+    let requestTopics = [
+      'checkIfNodeExists',
+      'checkIfEmailExists',
+      'sendRecoveryEmail',
+      'checkIfNodeRecoveryHashExists'
+    ];
+
+    let validMessage = this.validator.validate({
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        topic: {enum: (type === 'request' ? requestTopics : dataTopics.concat(deprecatedTopics))},
+        payload: {type: ['object', 'array']}
+      },
+      required: ['topic', 'payload']
+    }, message);
+
+    if (!validMessage) {
+      result.success = false;
+      result.errors = this.validatorError.getReadableErrorMessages(this.validator.errors);
+    }
+
+    return result;
+  }
+
+  handleDataTransport(spark, message) {
+    switch (message.topic) {
       case 'registerNode':
-        this.controllers.NodesController.add(spark, data.msg).then(result => {
+        this.controllers.NodesController.add(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'registerNodeResponse', result);
         });
         break;
+      case 'sendRecoveryEmail':
+        this.controllers.NodesController.sendRecoveryEmail(spark, message.payload).then(result => {
+          this.controllers.AbstractController.clientWrite(spark, 'sendRecoveryEmailResponse', result);
+        });
+        break;
       case 'recoverNode':
-        this.controllers.NodesController.recoverNode(spark, data.msg).then(result => {
+        this.controllers.NodesController.recoverNode(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'registerNodeResponse', result);
         });
         break;
       case 'login':
-        this.controllers.AuthController.login(spark, data.msg).then(result => {
+        this.controllers.AuthController.login(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'loginResponse', result);
 
           if (!result.success) {
@@ -235,32 +312,40 @@ export default class Server {
         });
         break;
       case 'connection':
-        this.controllers.ConnectionController.addLog(spark, data.msg).then(result => {
+        this.controllers.ConnectionController.addLog(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'connectionResponse', result);
         });
         break;
+      case 'pending':
+        this.log.debug(`[${spark.id}] - 'pending' not implemented !!!`);
+        break;
       case 'block':
-        this.controllers.BlocksController.add(spark, data.msg).then(result => {
+        this.controllers.BlocksController.add(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'blockResponse', result);
         });
         break;
       case 'stats':
-        this.controllers.StatsController.add(spark, data.msg).then(result => {
+        this.controllers.StatsController.add(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'statsResponse', result);
         });
         break;
       case 'usage':
-        this.controllers.UsageController.add(spark, data.msg).then(result => {
+        this.controllers.UsageController.add(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'usageResponse', result);
         });
         break;
       case 'sync':
-        this.controllers.SyncsController.add(spark, data.msg).then(result => {
+        this.controllers.SyncsController.add(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'syncResponse', result);
         });
         break;
+      case 'pong':
+        this.controllers.NodesController.getLatency(spark, message.payload).then(result => {
+          this.controllers.AbstractController.clientWrite(spark, 'pongResponse', result);
+        });
+        break;
       case 'checkChainData':
-        this.controllers.BlocksController.checkChain(spark, data.msg).then(result => {
+        this.controllers.BlocksController.checkChain(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'checkChainResponse', result);
 
           if (!result.success) {
@@ -270,60 +355,54 @@ export default class Server {
           }
         });
         break;
-      case 'history':
-        this.controllers.BlocksController.addHistory(spark, data.msg).then(result => {
-          this.controllers.AbstractController.clientWrite(spark, 'historyResponse', result);
+      case 'getBlocksData':
+        this.controllers.BlocksController.addHistory(spark, message.payload).then(result => {
+          this.controllers.AbstractController.clientWrite(spark, 'getBlocksResponse', result);
         });
         break;
 
       // backwards compatibility with v1 clients
       case 'node-ping': {
-        let clientTime = (data.msg && data.msg.clientTime) ? data.msg.clientTime : null;
+        let clientTime = (message.payload && message.payload.clientTime) ? message.payload.clientTime : null;
         this.controllers.AbstractController.clientWrite(spark, 'node-pong', {clientTime, serverTime: Date.now()});
         break;
       }
 
       case 'latency':
-        this.session.setVar(spark.id, 'latency', data.msg.latency);
-        this.controllers.AbstractController.sendLatencyToDeepstream(spark);
-        break;
-      case 'pending':
-        this.log.debug(`[${spark.id}] - 'pending' not needed`);
+        this.session.setVar(spark.id, 'latency', message.payload.latency);
+        this.controllers.NodesController.sendLatencyToDeepstream(spark);
         break;
 
       default:
-        this.log.warning(`[${spark.id}] - Data received on undefined topic: ${JSON.stringify(data)}`);
+        this.log.warning(`[${spark.id}] - Message received on undefined topic: ${JSON.stringify(message)}`);
         break;
     }
   }
 
-  handleCustomRequestTransport(spark, data, done) {
-    this.log.info(`[${spark.id}] - Request received on topic: ${data.topic}`);
-    this.prometheusMetrics.ethstats_server_ws_messages_topic_total.inc({topic: data.topic}, 1, Date.now());
-
-    switch (data.topic) {
+  handleCustomRequestTransport(spark, message, done) {
+    switch (message.topic) {
       case 'checkIfNodeExists':
-        this.controllers.NodesController.checkIfNodeExists(spark, data.msg).then(result => {
+        this.controllers.NodesController.checkIfNodeExists(spark, message.payload).then(result => {
           done(result);
         });
         break;
       case 'checkIfEmailExists':
-        this.controllers.NodesController.checkIfEmailExists(spark, data.msg).then(result => {
+        this.controllers.NodesController.checkIfEmailExists(spark, message.payload).then(result => {
           done(result);
         });
         break;
       case 'sendRecoveryEmail':
-        this.controllers.NodesController.sendRecoveryEmail(spark, data.msg).then(result => {
+        this.controllers.NodesController.sendRecoveryEmail(spark, message.payload).then(result => {
           done(result);
         });
         break;
       case 'checkIfNodeRecoveryHashExists':
-        this.controllers.NodesController.checkIfNodeRecoveryHashExists(spark, data.msg).then(result => {
+        this.controllers.NodesController.checkIfNodeRecoveryHashExists(spark, message.payload).then(result => {
           done(result);
         });
         break;
       default:
-        this.log.warning(`[${spark.id}] - Request received on undefined topic: ${JSON.stringify(data)}`);
+        this.log.warning(`[${spark.id}] - Message received on undefined topic: ${JSON.stringify(message)}`);
         break;
     }
   }
@@ -349,17 +428,17 @@ export default class Server {
       return data;
     }
 
-    let message = data.emit.shift();
+    let topic = data.emit.shift();
     let payload = data.emit.shift();
-    let result = {
+    let message = {
       topic: null,
-      msg: null
+      payload: null
     };
 
-    switch (message) {
+    switch (topic) {
       case 'hello':
-        result.topic = 'login';
-        result.msg = {
+        message.topic = 'login';
+        message.payload = {
           nodeName: payload.id,
           secretKey: payload.secret,
           coinbase: payload.info.coinbase,
@@ -373,63 +452,63 @@ export default class Server {
         };
         break;
       case 'node-ping':
-        result.topic = message;
-        result.msg = payload;
+        message.topic = topic;
+        message.payload = payload;
         break;
       case 'latency':
-        result.topic = message;
-        result.msg = payload;
+        message.topic = topic;
+        message.payload = payload;
         break;
       case 'pending':
-        result.topic = message;
-        result.msg = payload;
+        message.topic = topic;
+        message.payload = payload;
         break;
       case 'stats':
-        result.topic = message;
-        result.msg = {
-          mining: payload[message].mining,
-          peers: payload[message].peers,
-          hashrate: payload[message].hashrate,
-          gasPrice: payload[message].gasPrice
+        message.topic = topic;
+        message.payload = {
+          mining: payload[topic].mining,
+          peers: payload[topic].peers,
+          hashrate: payload[topic].hashrate,
+          gasPrice: payload[topic].gasPrice
         };
         break;
       case 'block':
-        result.topic = message;
-        result.msg = {
-          author: payload[message].author,
-          difficulty: payload[message].difficulty,
-          extraData: payload[message].extraData,
-          gasLimit: payload[message].gasLimit,
-          gasUsed: payload[message].gasUsed,
-          hash: payload[message].hash,
-          logsBloom: payload[message].logsBloom,
-          miner: payload[message].miner,
-          mixHash: payload[message].mixHash,
-          nonce: payload[message].nonce,
-          number: payload[message].number,
-          parentHash: payload[message].parentHash,
-          receiptsRoot: payload[message].receiptsRoot,
-          sealFields: payload[message].sealFields,
-          sha3Uncles: payload[message].sha3Uncles,
-          size: payload[message].size,
-          stateRoot: payload[message].stateRoot,
-          timestamp: payload[message].timestamp,
-          totalDifficulty: payload[message].totalDifficulty,
-          transactionsRoot: payload[message].transactionsRoot,
-          transactions: payload[message].transactions,
-          uncles: payload[message].uncles
+        message.topic = topic;
+        message.payload = {
+          author: payload[topic].author,
+          difficulty: payload[topic].difficulty,
+          extraData: payload[topic].extraData,
+          gasLimit: payload[topic].gasLimit,
+          gasUsed: payload[topic].gasUsed,
+          hash: payload[topic].hash,
+          logsBloom: payload[topic].logsBloom,
+          miner: payload[topic].miner,
+          mixHash: payload[topic].mixHash,
+          nonce: payload[topic].nonce,
+          number: payload[topic].number,
+          parentHash: payload[topic].parentHash,
+          receiptsRoot: payload[topic].receiptsRoot,
+          sealFields: payload[topic].sealFields,
+          sha3Uncles: payload[topic].sha3Uncles,
+          size: payload[topic].size,
+          stateRoot: payload[topic].stateRoot,
+          timestamp: payload[topic].timestamp,
+          totalDifficulty: payload[topic].totalDifficulty,
+          transactionsRoot: payload[topic].transactionsRoot,
+          transactions: payload[topic].transactions,
+          uncles: payload[topic].uncles
         };
         break;
       case 'history':
-        result.topic = message;
-        result.msg = payload[message].reverse();
+        message.topic = 'getBlocksData';
+        message.payload = payload[topic].reverse();
         break;
       default:
-        this.log.warning(`[${spark.id}] - Undefined v.1 message: ${message}`);
+        this.log.warning(`[${spark.id}] - Undefined v.1 topic: ${topic}`);
         break;
     }
 
-    return result;
+    return message;
   }
 
   checkIfPostgresTablesExists() {

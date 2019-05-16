@@ -37,24 +37,19 @@ export default class AbstractController {
     this.log.info(`[${spark.id}] - Client disconnected`);
   }
 
-  clientWrite(spark, topic, message) {
+  clientWrite(spark, topic, payload) {
     let session = this.session.getAll(spark.id);
     let logType = 'info';
-    let nodeName = '';
 
-    if (message.success !== undefined && message.data !== undefined) {
-      nodeName = (message.data.length && message.data[0].nodeName) ? `for node '${message.data[0].nodeName}' ` : '';
-    }
-
-    if (message.errors && message.errors.length) {
+    if (payload.errors && payload.errors.length) {
       logType = 'error';
-    } else if (message.warnings && message.warnings.length) {
+    } else if (payload.warnings && payload.warnings.length) {
       logType = 'warning';
     }
 
-    this.log[logType](`[${spark.id}] - Data sent ${nodeName}on topic: ${topic} => message: ${JSON.stringify(message)}`);
+    this.log[logType](`[${spark.id}] - Message sent on topic: ${topic} => payload: ${JSON.stringify(payload)}`);
 
-    let objectToSend = this._formatWriteObject(topic, message, session.isV1Client);
+    let objectToSend = this._formatWriteObject(topic, payload, session.isV1Client);
 
     if (objectToSend === false) {
       return false;
@@ -63,8 +58,8 @@ export default class AbstractController {
     return spark.write(objectToSend);
   }
 
-  _formatWriteObject(topic, message, isV1Client) {
-    let result = {topic, message};
+  _formatWriteObject(topic, payload, isV1Client) {
+    let result = {topic, payload};
 
     if (isV1Client === true) {
       switch (topic) {
@@ -72,10 +67,10 @@ export default class AbstractController {
           result = {emit: ['ready']};
           break;
         case 'node-pong':
-          result = {emit: ['node-pong', message]};
+          result = {emit: ['node-pong', payload]};
           break;
-        case 'history':
-          result = {emit: ['history', {list: message}]};
+        case 'getBlocks':
+          result = {emit: ['history', {list: payload}]};
           break;
         default:
           result = false;
@@ -84,13 +79,6 @@ export default class AbstractController {
     }
 
     return result;
-  }
-
-  sendLatencyToDeepstream(spark) {
-    let session = this.session.getAll(spark.id);
-    if (session.isLoggedIn === true) {
-      this.dsDataLoader.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/node/${session.nodeName}/nodeData`, 'nodeData.wsLatency', session.latency);
-    }
   }
 
   async logout(spark) {
@@ -146,37 +134,6 @@ export default class AbstractController {
     });
   }
 
-  setLastActivityTimestamp(spark) {
-    let session = this.session.getAll(spark.id);
-
-    if (session.isLoggedIn === true) {
-      let nodeName = session.nodeName;
-      let totalOnlineTime = session.totalOnlineTime;
-      let firstLoginTimestamp = parseInt(session.firstLoginTimestamp, 10);
-      let lastActivityTimestamp = session.lastActivityTimestamp || 0;
-      let currentTimestamp = Date.now();
-
-      // throttle last activity once every 1 minute
-      if (currentTimestamp - lastActivityTimestamp >= 60000) {
-        totalOnlineTime = totalOnlineTime.plus((lastActivityTimestamp === 0) ? 0 : currentTimestamp - lastActivityTimestamp);
-        this.session.setVar(spark.id, 'totalOnlineTime', totalOnlineTime);
-
-        let onlineTimePercent = totalOnlineTime.dividedBy(currentTimestamp - firstLoginTimestamp).multipliedBy(100).toFixed(2);
-        onlineTimePercent = Math.max(0, Math.min(100, onlineTimePercent));
-        this.dsDataLoader.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/node/${session.nodeName}/nodeData`, 'nodeData.onlineTimePercent', onlineTimePercent);
-
-        this.session.setVar(spark.id, 'lastActivityTimestamp', currentTimestamp);
-        this.models.Nodes.update({
-          nodeShard: nodeName.charAt(0).toLowerCase(),
-          nodeName: nodeName
-        }, {
-          lastActivityTimestamp: new Date(currentTimestamp).toISOString(),
-          totalOnlineTime: totalOnlineTime.toString(10)
-        });
-      }
-    }
-  }
-
   requestCheckChain(spark, params) {
     let session = this.session.getAll(spark.id);
 
@@ -189,7 +146,7 @@ export default class AbstractController {
       if ((checkChainLastRequestedBlockNumber === null || receivedBlockNumber > checkChainLastRequestedBlockNumber) && receivedBlockNumber - checkChainLastRequestedBlockNumber >= chainDetectionRate) {
         let blockNumberToCheck = receivedBlockNumber - chainDetectionRate;
         this.log.debug(`[${spark.id}] - Check chain request: ${blockNumberToCheck}`);
-        this.clientWrite(spark, 'checkChainRequest', blockNumberToCheck);
+        this.clientWrite(spark, 'checkChain', {blockNumber: blockNumberToCheck});
         this.session.setVar(spark.id, 'checkChainLastRequestedBlockNumber', receivedBlockNumber);
         this.session.incVar(spark.id, 'checkChainRequestCount', 1);
         checkChainRequestCount += 1;

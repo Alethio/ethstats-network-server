@@ -55,6 +55,9 @@ export default class AppConfig {
     config.APP_PORT = this._convertToInt(this.cli.flags.port || config.APP_PORT);
     config.APP_NAME = this.cli.flags.app || config.APP_NAME;
 
+    config.SERVER_PING_INTERVAL = this._convertToInt(config.SERVER_PING_INTERVAL);
+    config.SERVER_WS_TIMEOUT = this._convertToInt(config.SERVER_WS_TIMEOUT);
+
     config.LITE = this._convertToBoolean(this.cli.flags.lite || config.LITE);
     config.LITE_API_PORT = this._convertToInt(this.cli.flags.liteApiPort || config.LITE_API_PORT);
     config.LITE_DB_LIMIT = this._convertToInt(this.cli.flags.liteDbLimit || config.LITE_DB_LIMIT);

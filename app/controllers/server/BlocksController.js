@@ -161,8 +161,8 @@ export default class BlocksController extends AbstractController {
               let blocksToGet = this.lodash.range(Math.max(0, receivedBlockNumber - historyMaxBlocks), receivedBlockNumber, 1);
 
               if (blocksToGet.length) {
-                this.log.debug(`[${spark.id}] - Get history: ${this.lodash.min(blocksToGet)}..${this.lodash.max(blocksToGet)}`);
-                this.clientWrite(spark, 'history', blocksToGet);
+                this.log.debug(`[${spark.id}] - Get block history: ${this.lodash.min(blocksToGet)}..${this.lodash.max(blocksToGet)}`);
+                this.clientWrite(spark, 'getBlocks', blocksToGet);
                 this.historyFulfilled = true;
               }
             }
@@ -219,23 +219,23 @@ export default class BlocksController extends AbstractController {
     }
   }
 
-  async checkChain(spark, block) {
+  async checkChain(spark, data) {
     let responseObject = this.lodash.cloneDeep(this.responseObject);
-    let blockNumberToCheck = parseInt(block.number, 10);
+    let blockNumberToCheck = parseInt(data.blockNumber, 10);
     let requestValidation = {
       request: {
         type: 'object',
         additionalProperties: false,
         properties: {
-          number: {type: 'integer'},
-          hash: {type: 'string'},
-          parentHash: {type: 'string'}
+          blockNumber: {type: 'integer'},
+          blockHash: {type: 'string'},
+          blockParentHash: {type: 'string'}
         },
-        required: ['number', 'hash', 'parentHash']
+        required: ['blockNumber', 'blockHash', 'blockParentHash']
       }
     };
 
-    let validParams = this.validator.validate(requestValidation.request, block);
+    let validParams = this.validator.validate(requestValidation.request, data);
     if (!validParams) {
       responseObject.success = false;
       responseObject.errors = this.validatorError.getReadableErrorMessages(this.validator.errors);
@@ -258,7 +258,7 @@ export default class BlocksController extends AbstractController {
 
       return this.infura.getBlockByNumber(blockNumberToCheck).then(infuraBlock => {
         if (infuraBlock) {
-          if (infuraBlock.hash === block.hash && infuraBlock.parentHash === block.parentHash) {
+          if (infuraBlock.hash === data.blockHash && infuraBlock.parentHash === data.blockParentHash) {
             this.log.debug(`[${spark.id}] - The node is on '${this.appConfig.NETWORK}' network`);
           } else {
             responseObject.success = false;
@@ -287,9 +287,9 @@ export default class BlocksController extends AbstractController {
     return Promise.all(allPromises).then(() => {
       return responseObject;
     }).catch(error => {
-      this.log.error(`Error processing history: ${error}`);
+      this.log.error(`Error processing block history: ${error}`);
       responseObject.success = false;
-      responseObject.errors.push(`Error processing history: ${error}`);
+      responseObject.errors.push(`Error processing block history: ${error}`);
 
       return responseObject;
     });
