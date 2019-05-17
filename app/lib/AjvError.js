@@ -5,6 +5,8 @@ export default class AjvError {
 
   getReadableErrorMessages(errors) {
     let errorMessages = [];
+    let additionalPropertiesAlreadyExists = false;
+
     this.lodash.each(errors, error => {
       let param = (error.dataPath === '') ? '' : `'${error.dataPath.substr(1)}' `;
       switch (error.keyword) {
@@ -26,9 +28,15 @@ export default class AjvError {
         case 'enum':
           errorMessages.push(`Param ${param}${error.message}: ${error.params.allowedValues.join(', ')}`);
           break;
-        case 'additionalProperties':
-          errorMessages.push('Should NOT have additional params');
+        case 'additionalProperties': {
+          if (!additionalPropertiesAlreadyExists) {
+            additionalPropertiesAlreadyExists = true;
+            errorMessages.push('Should NOT have additional params');
+          }
+
           break;
+        }
+
         default:
           errorMessages.push(error);
           break;
