@@ -563,6 +563,7 @@ Payload attributes:
 | peers         | integer         | yes               | The number of peers currently connected to the node. |
 | hashrate      | integer, string | yes               | The number of hashes per second that the node is mining with. |
 | gasPrice      | integer, string | yes               | The current price per gas in wei. |
+| pendingTXs    | integer         | yes               | The number of pending transactions. |
 
 ```json
 {
@@ -571,7 +572,8 @@ Payload attributes:
     "peers": 48,
     "mining": false,
     "hashrate": 0,
-    "gasPrice": "3150000000"
+    "gasPrice": "3150000000",
+    "pendingTXs": 568
   }
 }
 ```

@@ -178,6 +178,7 @@ export default class Server {
       });
 
       spark.on('data', message => {
+        message = this.checkBackwardsCompatibility(spark, message);
         this.handleMessage(spark, 'data', message, {});
       });
 
@@ -213,7 +214,7 @@ export default class Server {
     this.session.setVar(spark.id, 'lastActivityTimestamp', Date.now());
     this.controllers.NodesController.saveLastActivityTimestamp(spark);
 
-    let messageValidationResult = this.validateMessage(type, this.checkBackwardsCompatibility(spark, message));
+    let messageValidationResult = this.validateMessage(type, message);
 
     if (messageValidationResult.success === false) {
       this.controllers.AbstractController.clientWrite(spark, 'invalidMessage', messageValidationResult);
@@ -250,11 +251,10 @@ export default class Server {
       'stats',
       'usage',
       'pong',
-      'pending',
       'checkChainData',
       'getBlocksData'
     ];
-    let deprecatedTopics = ['node-ping', 'latency'];
+    let deprecatedTopics = ['node-ping', 'latency', 'pending'];
     let requestTopics = [
       'checkIfNodeExists',
       'checkIfEmailExists',
@@ -316,9 +316,6 @@ export default class Server {
           this.controllers.AbstractController.clientWrite(spark, 'connectionResponse', result);
         });
         break;
-      case 'pending':
-        this.log.debug(`[${spark.id}] - 'pending' not implemented !!!`);
-        break;
       case 'block':
         this.controllers.BlocksController.add(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'blockResponse', result);
@@ -371,6 +368,10 @@ export default class Server {
       case 'latency':
         this.session.setVar(spark.id, 'latency', message.payload.latency);
         this.controllers.NodesController.sendLatencyToDeepstream(spark);
+        break;
+
+      case 'pending':
+        this.log.debug(`[${spark.id}] - Received 'pending' => ignoring (deprecated) !!!`);
         break;
 
       default:
@@ -459,17 +460,25 @@ export default class Server {
         message.topic = topic;
         message.payload = payload;
         break;
-      case 'pending':
+      case 'pending': {
         message.topic = topic;
         message.payload = payload;
+
+        if (spark && spark.id && payload && payload.stats && payload.stats.pending !== undefined) {
+          this.session.setVar(spark.id, 'pendingTXs', payload.stats.pending);
+        }
+
         break;
+      }
+
       case 'stats':
         message.topic = topic;
         message.payload = {
           mining: payload[topic].mining,
           peers: payload[topic].peers,
           hashrate: payload[topic].hashrate,
-          gasPrice: payload[topic].gasPrice
+          gasPrice: payload[topic].gasPrice,
+          pendingTXs: this.session.getVar(spark.id, 'pendingTXs') || 0
         };
         break;
       case 'block':
