@@ -56,7 +56,7 @@ export default class NodesController extends AbstractController {
       this.models.Nodes.add(nodeParams);
 
       let mailTemplate = new NodeRegisterView({
-        network: this.appConfig.NETWORK,
+        networkName: this.appConfig.NETWORK_NAME,
         nodeName: nodeParams.nodeName,
         secretKey: undefined,
         showGethHelp: false

@@ -11,6 +11,8 @@ services:
       - 127.0.0.1:3030:3030
       - 127.0.0.1:8888:8888
     environment:
+      - NETWORK_ID=1
+      - NETWORK_NAME=mainnet
       - LITE=1
       - LITE_DB_PERSIST=0
       - LITE_API_PORT=3030

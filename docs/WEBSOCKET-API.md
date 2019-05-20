@@ -170,7 +170,7 @@ Payload attributes:
 | client        | string          | yes               | Client version. E.q. `ethstats-cli` sends its version. In case the data is sent directly from the node, its version should be sent. |
 | coinbase      | string          | no                | Node coinbase address to which mining rewards will go, if the node is mining. [Web3](https://web3js.readthedocs.io) example: `web3.eth.getCoinbase`. | 
 | node          | string          | no                | Node information containing name and version. [Web3](https://web3js.readthedocs.io) exmaple: `web3.eth.getNodeInfo`. |
-| net           | string          | no                | Network ID the node is running on. [Web3](https://web3js.readthedocs.io) example: `web3.eth.net.getId`. |
+| net           | integer, string | yes               | Network ID the node is running on. [Web3](https://web3js.readthedocs.io) example: `web3.eth.net.getId`. |
 | protocol      | number, string  | no                | Ethereum protocol version of the node. [Web3](https://web3js.readthedocs.io) example: `web3.eth.getProtocolVersion`. |
 | api           | string          | no                | API version used to extract data from the node. [Web3](https://web3js.readthedocs.io) example: `web3.version`. |
 | cpu           | string          | no                | CPU information of the machine the node is running on. [SystemInformation](https://www.npmjs.com/package/systeminformation) example: `si.getCpuInfo`. |

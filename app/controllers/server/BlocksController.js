@@ -133,7 +133,7 @@ export default class BlocksController extends AbstractController {
       params.transactions = params.transactionHashes;
     }
 
-    let validParams = this.validator.validate(requestValidation[this.appConfig.NETWORK].request, params);
+    let validParams = this.validator.validate((requestValidation[this.appConfig.NETWORK_NAME] || requestValidation.mainnet).request, params);
     if (!validParams) {
       responseObject.success = false;
       responseObject.errors = this.validatorError.getReadableErrorMessages(this.validator.errors);
@@ -244,7 +244,7 @@ export default class BlocksController extends AbstractController {
     }
 
     this.session.incVar(spark.id, 'checkChainRequestCount', -1);
-    let notOnNetworkErrorMsg = `The node is NOT on the '${this.appConfig.NETWORK}' network`;
+    let notOnNetworkErrorMsg = `The node is NOT on the '${this.appConfig.NETWORK_NAME}' network`;
 
     return this.infura.getLastBlockNumber().then(blockNumber => {
       let lastBlockNumber = parseInt(this.bigNumberUtils.getInt(blockNumber), 10);
@@ -259,7 +259,7 @@ export default class BlocksController extends AbstractController {
       return this.infura.getBlockByNumber(blockNumberToCheck).then(infuraBlock => {
         if (infuraBlock) {
           if (infuraBlock.hash === data.blockHash && infuraBlock.parentHash === data.blockParentHash) {
-            this.log.debug(`[${spark.id}] - The node is on '${this.appConfig.NETWORK}' network`);
+            this.log.debug(`[${spark.id}] - The node is on '${this.appConfig.NETWORK_NAME}' network`);
           } else {
             responseObject.success = false;
             responseObject.errors.push(notOnNetworkErrorMsg);

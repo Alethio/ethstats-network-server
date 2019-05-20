@@ -7,7 +7,7 @@ export default class EthstatsBlobApi {
     this.lodash = diContainer.lodash;
     this.requestPromise = requestPromise;
 
-    this.network = this.appConfig.NETWORK;
+    this.networkName = this.appConfig.NETWORK_NAME;
     this.apiUrl = this.appConfig.ETHSTATS_BLOB_API_URL;
     this.apiKey = this.appConfig.ETHSTATS_BLOB_API_KEY;
   }
@@ -42,7 +42,7 @@ export default class EthstatsBlobApi {
 
   getBlockByNumber(number) {
     let requestParams = {
-      uri: `${this.apiUrl}/${this.network}/blocks/rpc/${number}?call=eth_getBlockByNumber`
+      uri: `${this.apiUrl}/${this.networkName}/blocks/rpc/${number}?call=eth_getBlockByNumber`
     };
 
     return this.get(requestParams);

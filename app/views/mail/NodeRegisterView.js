@@ -5,8 +5,8 @@ export default class NodeRegisterView {
     this.nodeName = params.nodeName;
     this.secretKey = params.secretKey;
     this.showGethHelp = params.showGethHelp;
-    this.serverUrl = clientConfigs.serverUrl[params.network].url.replace('https://', 'wss://').replace(':443', '');
-    this.dashboardUrl = clientConfigs.dashboardUrl[params.network];
+    this.serverUrl = (clientConfigs.serverUrl[params.networkName] || clientConfigs.serverUrl.mainnet).url.replace('https://', 'wss://').replace(':443', '');
+    this.dashboardUrl = (clientConfigs.dashboardUrl[params.networkName] || clientConfigs.dashboardUrl.mainnet).url;
 
     this.secretKeyText = this.secretKey === undefined ? '.' : ` and this is your assigned secret key: <b>${this.secretKey}</b>`;
     this.gethText = this.showGethHelp === true ? `To start contributing please run your Geth instance by adding the option below:<br>
@@ -24,11 +24,11 @@ Node doubt about it,<br>
 you’re now part of the EthStats network!<br>
 <br>
 <br>
-Your node, <b>${this.nodeName}</b> has been successfully added to the platform for the ${params.network.toUpperCase()} network${this.secretKeyText}<br>
+Your node, <b>${this.nodeName}</b> has been successfully added to the platform for the ${params.networkName.toUpperCase()} network${this.secretKeyText}<br>
 <br>
 <br>
 ${this.gethText}
-You can see the activity of your node here: ${this.dashboardUrl.url}<br>
+You can see the activity of your node here: ${this.dashboardUrl}<br>
 Don't forget we're always around to help you, so please get in touch with us for any questions or requests at <a href="mailto:support@ethstats.io">support@ethstats.io</a>.<br>
 <br>
 <br>
