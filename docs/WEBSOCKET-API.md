@@ -559,11 +559,11 @@ Payload attributes:
 
 | Attribute     | Type            | Mandatory         | Description             |
 |---------------|-----------------|-------------------|-------------------------|
-| mining        | boolean         | yes               | `true` if the node is actively mining new blocks. |
-| peers         | integer         | yes               | The number of peers currently connected to the node. |
-| hashrate      | integer, string | yes               | The number of hashes per second that the node is mining with. |
-| gasPrice      | integer, string | yes               | The current price per gas in wei. |
-| pendingTXs    | integer         | yes               | The number of pending transactions. |
+| mining        | boolean         | yes               | `true` if the node is actively mining new blocks. [Web3](https://web3js.readthedocs.io) example: `web3.eth.isMining`. |
+| peers         | integer         | yes               | The number of peers currently connected to the node. [Web3](https://web3js.readthedocs.io) example: `web3.eth.net.getPeerCount`. |
+| hashrate      | integer, string | yes               | The number of hashes per second that the node is mining with. [Web3](https://web3js.readthedocs.io) example: `web3.eth.getHashrate`. |
+| gasPrice      | integer, string | yes               | The current price per gas in wei. [Web3](https://web3js.readthedocs.io) example: `web3.eth.getGasPrice`. |
+| pendingTXs    | integer         | yes               | The number of pending transactions. [Web3](https://web3js.readthedocs.io) example: `web3.eth.getBlockTransactionCount('pending')`. |
 
 ```json
 {
