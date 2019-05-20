@@ -13,7 +13,7 @@ export default class SyncsController extends AbstractController {
           currentBlock: {type: 'integer'},
           highestBlock: {type: 'integer'}
         },
-        required: ['syncOperation', 'startingBlock', 'currentBlock', 'highestBlock']
+        required: ['startingBlock', 'currentBlock', 'highestBlock']
       }
     };
 
