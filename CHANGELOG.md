@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2019-05-21
+- Add WebSocket API improvements
+- Add WebSocket API documentation
+- Add support for "stats.pendingTxs"
+- Validate networkId on login
+- Remove ".net" subdomain
+
 ## [1.4.1] - 2019-04-01
 - Remove "sprintf" npm package due to memory leaks
 - Update Infura library to use latest v3 API
