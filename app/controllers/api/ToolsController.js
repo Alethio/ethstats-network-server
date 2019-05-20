@@ -15,6 +15,7 @@ export default class ToolsController extends AbstractController {
       this.cache.flushDb();
 
       if (errors.length) {
+        responseObject.statusCode = 400;
         responseObject.body.success = false;
         responseObject.body.errors.push('There seem to be some problems executing this request');
       }

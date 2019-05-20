@@ -39,6 +39,7 @@ export default class NodesController extends AbstractController {
     });
 
     if (nodeExists) {
+      responseObject.statusCode = 400;
       responseObject.body.data.push(resultData);
       responseObject.body.success = false;
       responseObject.body.errors.push('Node already registered');
