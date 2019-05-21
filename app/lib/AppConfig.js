@@ -42,6 +42,8 @@ export default class AppConfig {
   }
 
   initConfigs(config) {
+    config.NETWORK_ID = this._convertToInt(config.NETWORK_ID || 1);
+
     config.LOG_SHOW_DATETIME = this._convertToBoolean(config.LOG_SHOW_DATETIME || 1);
     config.LOG_SHOW_INFOS = this._convertToBoolean(this.cli.flags.verbose || config.LOG_SHOW_INFOS || 0);
     config.LOG_SHOW_WARNINGS = this._convertToBoolean(config.LOG_SHOW_WARNINGS || 1);
@@ -54,6 +56,9 @@ export default class AppConfig {
     config.APP_HOST = this.cli.flags.host || config.APP_HOST;
     config.APP_PORT = this._convertToInt(this.cli.flags.port || config.APP_PORT);
     config.APP_NAME = this.cli.flags.app || config.APP_NAME;
+
+    config.SERVER_PING_INTERVAL = this._convertToInt(config.SERVER_PING_INTERVAL);
+    config.SERVER_WS_TIMEOUT = this._convertToInt(config.SERVER_WS_TIMEOUT);
 
     config.LITE = this._convertToBoolean(this.cli.flags.lite || config.LITE);
     config.LITE_API_PORT = this._convertToInt(this.cli.flags.liteApiPort || config.LITE_API_PORT);

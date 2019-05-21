@@ -56,7 +56,7 @@ export default class NodesController extends AbstractController {
       this.models.Nodes.add(nodeParams);
 
       let mailTemplate = new NodeRegisterView({
-        network: this.appConfig.NETWORK,
+        networkName: this.appConfig.NETWORK_NAME,
         nodeName: nodeParams.nodeName,
         secretKey: undefined,
         showGethHelp: false
@@ -391,5 +391,82 @@ export default class NodesController extends AbstractController {
     responseObject.dataLength = responseObject.data.length;
 
     return responseObject;
+  }
+
+  async getLatency(spark, params) {
+    let responseObject = this.lodash.cloneDeep(this.responseObject);
+    let requestValidation = {
+      request: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          timestamp: {type: 'number'}
+        },
+        required: ['timestamp']
+      }
+    };
+
+    let validParams = this.validator.validate(requestValidation.request, params);
+    if (!validParams) {
+      responseObject.success = false;
+      responseObject.errors = this.validatorError.getReadableErrorMessages(this.validator.errors);
+
+      return responseObject;
+    }
+
+    let session = this.session.getAll(spark.id);
+    if (session.lastPingTimestamp === params.timestamp) {
+      let latency = Math.ceil((Date.now() - session.lastPingTimestamp) / 2);
+
+      this.session.setVar(spark.id, 'latency', latency);
+      this.sendLatencyToDeepstream(spark);
+
+      responseObject.data.push({latency: latency});
+      responseObject.dataLength = responseObject.data.length;
+    } else {
+      responseObject.success = false;
+      responseObject.errors.push('Wrong timestamp');
+    }
+
+    return responseObject;
+  }
+
+  sendLatencyToDeepstream(spark) {
+    let session = this.session.getAll(spark.id);
+    if (session.isLoggedIn === true) {
+      this.dsDataLoader.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/node/${session.nodeName}/nodeData`, 'nodeData.wsLatency', session.latency);
+    }
+  }
+
+  saveLastActivityTimestamp(spark) {
+    let session = this.session.getAll(spark.id);
+
+    if (session.isLoggedIn === true) {
+      let nodeName = session.nodeName;
+      let totalOnlineTime = session.totalOnlineTime;
+      let firstLoginTimestamp = parseInt(session.firstLoginTimestamp, 10);
+      let lastActivityTimestamp = session.lastActivityTimestamp;
+      let lastSavedLastActivityTimestamp = session.lastSavedLastActivityTimestamp;
+      let currentTimestamp = Date.now();
+
+      // save last activity in the DB once every min 1 minute
+      if (currentTimestamp - lastSavedLastActivityTimestamp >= 60000) {
+        totalOnlineTime = totalOnlineTime.plus(lastActivityTimestamp - lastSavedLastActivityTimestamp);
+        this.session.setVar(spark.id, 'totalOnlineTime', totalOnlineTime);
+
+        let onlineTimePercent = totalOnlineTime.dividedBy(currentTimestamp - firstLoginTimestamp).multipliedBy(100).toFixed(2);
+        onlineTimePercent = Math.max(0, Math.min(100, onlineTimePercent));
+        this.dsDataLoader.setRecord(`${this.appConfig.DEEPSTREAM_NAMESPACE}/node/${session.nodeName}/nodeData`, 'nodeData.onlineTimePercent', onlineTimePercent);
+
+        this.session.setVar(spark.id, 'lastSavedLastActivityTimestamp', currentTimestamp);
+        this.models.Nodes.update({
+          nodeShard: nodeName.charAt(0).toLowerCase(),
+          nodeName: nodeName
+        }, {
+          lastActivityTimestamp: new Date(lastActivityTimestamp).toISOString(),
+          totalOnlineTime: totalOnlineTime.toString(10)
+        });
+      }
+    }
   }
 }

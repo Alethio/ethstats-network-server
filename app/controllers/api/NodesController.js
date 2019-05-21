@@ -39,6 +39,7 @@ export default class NodesController extends AbstractController {
     });
 
     if (nodeExists) {
+      responseObject.statusCode = 400;
       responseObject.body.data.push(resultData);
       responseObject.body.success = false;
       responseObject.body.errors.push('Node already registered');
@@ -55,7 +56,7 @@ export default class NodesController extends AbstractController {
       this.models.Nodes.add(nodeParams);
 
       let mailTemplate = new NodeRegisterView({
-        network: this.appConfig.NETWORK,
+        networkName: this.appConfig.NETWORK_NAME,
         nodeName: nodeParams.nodeName,
         secretKey: secretKey,
         showGethHelp: true

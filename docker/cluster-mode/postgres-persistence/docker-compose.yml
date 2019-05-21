@@ -70,6 +70,8 @@ services:
       - 127.0.0.1:3000:3000
       - 127.0.0.1:8888:8888
     environment:
+      - NETWORK_ID=1
+      - NETWORK_NAME=mainnet
       - LITE=0
       - APP_PORT=3000
       - APP_NAME=server

@@ -11,9 +11,10 @@ export default class StatsController extends AbstractController {
           mining: {type: 'boolean'},
           peers: {type: 'integer'},
           hashrate: {type: ['integer', 'string']},
-          gasPrice: {type: ['integer', 'string']}
+          gasPrice: {type: ['integer', 'string']},
+          pendingTXs: {type: 'integer'}
         },
-        required: ['mining', 'peers', 'hashrate', 'gasPrice']
+        required: ['mining', 'peers', 'hashrate', 'gasPrice', 'pendingTXs']
       }
     };
 

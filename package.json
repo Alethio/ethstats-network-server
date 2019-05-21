@@ -1,6 +1,6 @@
 {
   "name": "ethstats-network-server",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "EthStats - Server",
   "homepage": "https://github.com/Alethio/ethstats-network-server",
   "license": "MIT",
@@ -12,17 +12,10 @@
     "url": "https://github.com/Alethio/ethstats-network-server/issues"
   },
   "author": {
-    "name": "Marian Oancea",
-    "email": "marian.oancea@consensys.net",
-    "url": "https://github.com/cubedro"
+    "name": "Adrian Sabau",
+    "email": "adrian.sabau@consensys.net",
+    "url": "https://github.com/baxy"
   },
-  "contributors": [
-    {
-      "name": "Adrian Sabau",
-      "email": "adrian.sabau@consensys.net",
-      "url": "https://github.com/baxy"
-    }
-  ],
   "dependencies": {
     "@babel/polyfill": "7.4.0",
     "dir-require": "1.0.4",

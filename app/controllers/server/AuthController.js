@@ -15,7 +15,7 @@ export default class AuthController extends AbstractController {
           secretKey: {type: 'string'},
           coinbase: {type: ['string', 'null']},
           node: {type: ['string', 'null']},
-          net: {type: ['string', 'null']},
+          net: {type: ['integer', 'string']},
           protocol: {type: ['number', 'string', 'null']},
           api: {type: ['string', 'null']},
           os: {type: 'string'},
@@ -25,7 +25,7 @@ export default class AuthController extends AbstractController {
           memory: {type: ['string', 'null']},
           disk: {type: ['string', 'null']}
         },
-        required: ['nodeName', 'secretKey', 'os', 'osVersion', 'client']
+        required: ['nodeName', 'secretKey', 'os', 'osVersion', 'client', 'net']
       }
     };
 
@@ -68,6 +68,13 @@ export default class AuthController extends AbstractController {
       if (!this.lodash.isEmpty(params.secretKey) && !this.lodash.isEmpty(node.secretKey) && this.sha1(params.secretKey) !== node.secretKey) {
         responseObject.success = false;
         responseObject.errors.push('Secret key is invalid');
+
+        return responseObject;
+      }
+
+      if (this.appConfig.NETWORK_ID !== parseInt(params.net, 10)) {
+        responseObject.success = false;
+        responseObject.errors.push(`The node is NOT on the '${this.appConfig.NETWORK_NAME}' network`);
 
         return responseObject;
       }

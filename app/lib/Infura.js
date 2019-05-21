@@ -8,7 +8,7 @@ export default class Infura {
     this.requestPromise = requestPromise;
     this.bigNumberUtils = diContainer.bigNumberUtils;
 
-    this.network = this.appConfig.NETWORK;
+    this.networkName = this.appConfig.NETWORK_NAME;
     this.url = this.appConfig.INFURA_URL;
     this.projectId = this.appConfig.INFURA_PROJECT_ID;
     this.projectSecret = this.appConfig.INFURA_PROJECT_SECRET;
@@ -20,7 +20,7 @@ export default class Infura {
       headers: {
         Authorization: `Basic ${Buffer.from(':' + this.projectSecret).toString('base64')}`
       },
-      uri: `https://${this.network}.${this.url}/${this.projectId}`,
+      uri: `https://${this.networkName}.${this.url}/${this.projectId}`,
       json: false,
       body: JSON.stringify(jsonRpcObject)
     };
