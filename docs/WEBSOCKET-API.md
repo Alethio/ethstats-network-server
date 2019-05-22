@@ -96,6 +96,7 @@ In the table bellow you can find the list of topics on which the `client` **must
 | Client Topic                                          | Server Topic                                      |
 |-------------------------------------------------------|---------------------------------------------------|
 | [invalidMessage](#invalidMessage)                     | none                                              |
+| [clientTimeout](#clientTimeout)                       | none                                              |
 | [requestRateLimitReached](#requestRateLimitReached)   | none                                              |
 | [ping](#ping)                                         | [pong](#pong)                                     |
 | [pongResponse](#pongResponse)                         | none                                              |
@@ -696,6 +697,27 @@ Example using wscat:
 ```bash
 > {"aaa":"topic","bbb":"payload"}
 < {"topic":"invalidMessage","payload":{"success":false,"data":[],"dataLength":0,"warnings":[],"errors":["Should NOT have additional params","Should NOT have additional params","Param 'topic' is required","Param 'payload' is required"]}}
+```
+
+---
+
+#### clientTimeout
+If the server is not receiving any data from the client for more then 3 minutes, it will end the connection with the client.
+In this case it will send a message on this topic to let the client know the reason why it was diconnected.  
+
+This is not a message for which the server expects any response, so none should be sent back to the server!  
+
+```json
+{
+  "topic": "clientTimeout",
+  "payload": {
+    "success": false,
+    "data": [],
+    "dataLength": 0,
+    "warnings": ["No data received for more than 180 seconds, ending connection"],
+    "errors": []
+  }
+}
 ```
 
 ---
