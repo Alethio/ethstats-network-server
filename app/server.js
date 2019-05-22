@@ -142,8 +142,15 @@ export default class Server {
           let lastActivityTimestamp = this.session.getVar(sparkId, 'lastActivityTimestamp');
 
           if (lastPingTimestamp - lastActivityTimestamp >= (this.wsTimeout * 1000)) {
-            this.log.info(`[${sparkId}] - No response from client for more than ${this.wsTimeout} seconds, ending connection`);
-            this.clients[sparkId].end();
+            let notificationMessage = `No data received for more than ${this.wsTimeout} seconds, ending connection`;
+
+            this.log.info(`[${sparkId}] - ${notificationMessage}`);
+
+            let responseObject = this.lodash.cloneDeep(this.controllers.AbstractController.responseObject);
+            responseObject.success = false;
+            responseObject.errors.push(notificationMessage);
+            this.controllers.AbstractController.clientWrite(this.clients[sparkId], 'clientTimeout', responseObject);
+            this.controllers.AbstractController.clientClose(this.clients[sparkId]);
           }
 
           if (this.clients[sparkId] !== undefined && this.session.getVar(sparkId, 'isV1Client') === false) {
