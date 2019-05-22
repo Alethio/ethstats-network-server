@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2019-05-22
+- Add "clientTimeout" message sent to the client when inactive for more then 3 minutes
+
 ## [1.5.0] - 2019-05-21
 - Add WebSocket API improvements
 - Add WebSocket API documentation
