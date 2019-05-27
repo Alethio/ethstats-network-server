@@ -1,4 +1,6 @@
 import AbstractController from './AbstractController.js';
+import BlockUtils from '../../lib/BlockUtils.js';
+import ethonDictionary from '../../lib/EthonDictionary.js';
 
 export default class BlocksController extends AbstractController {
   add(params, callback) {
@@ -206,6 +208,10 @@ export default class BlocksController extends AbstractController {
       if (setAsLastBlock) {
         this._setLastBlock(newBlockParams);
         this._sendLastBlockToDeepstream(newBlockParams);
+
+        if (['ibft2', 'clique'].includes(this.appConfig.NETWORK_ALGO) && params.extraData) {
+          this._sendValidatorsToDeepstream(BlockUtils.getValidators(this.appConfig.NETWORK_ALGO, params.extraData));
+        }
       }
 
       if (sendStatisticsToDeepstream) {
@@ -347,6 +353,22 @@ export default class BlocksController extends AbstractController {
       lastBlock = this.lodash.orderBy(lastBlock, ['rank'], ['desc']);
       this.cache.setVar('lastBlock', JSON.stringify(lastBlock), this.appConfig.CACHE_LAST_BLOCK_EXPIRE);
       this.log.debug(`Set 'lastBlock' into CACHE: '${lastBlock[0].number}' => ${JSON.stringify(lastBlock)}`);
+    });
+  }
+
+  _sendValidatorsToDeepstream(validators) {
+    let nodesList = this.deepstream.record.getList(`${this.appConfig.DEEPSTREAM_NAMESPACE}/nodes`);
+    nodesList.whenReady(list => {
+      list.getEntries().forEach(dsNodeId => {
+        this.dsDataLoader.getRecord(`${dsNodeId}/nodeData`).whenReady(node => {
+          let nodeData = node.get()[ethonDictionary.nodeData];
+          if (nodeData) {
+            if (validators.includes(nodeData[ethonDictionary.coinbase])) {
+              this.dsDataLoader.setRecord(`${dsNodeId}/nodeData`, 'nodeData.isValidator', true);
+            }
+          }
+        });
+      });
     });
   }
 }

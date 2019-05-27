@@ -5,6 +5,7 @@ const ethonDictionary = {
   accountEmail: 'ethstats:accountEmail',
   secretKey: 'ethstats:nodeSecretKey',
   isActive: 'ethstats:nodeIsActive',
+  isValidator: 'ethstats:nodeIsValidator',
   lastIp: 'ethstats:lastIp',
   createdTimestamp: 'ethstats:createdTimestamp',
   lastActivityTimestamp: 'ethstats:lastActivityTimestamp',

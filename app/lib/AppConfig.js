@@ -43,6 +43,7 @@ export default class AppConfig {
 
   initConfigs(config) {
     config.NETWORK_ID = this._convertToInt(config.NETWORK_ID || 1);
+    config.NETWORK_ALGO = config.NETWORK_ALGO || 'ethash';
 
     config.LOG_SHOW_DATETIME = this._convertToBoolean(config.LOG_SHOW_DATETIME || 1);
     config.LOG_SHOW_INFOS = this._convertToBoolean(this.cli.flags.verbose || config.LOG_SHOW_INFOS || 0);

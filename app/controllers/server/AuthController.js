@@ -179,6 +179,10 @@ export default class AuthController extends AbstractController {
       nodeUsage: null
     };
 
+    if (['ibft2', 'clique'].includes(this.appConfig.NETWORK_ALGO)) {
+      dataToSend.nodeData.isValidator = false;
+    }
+
     let nodesList = this.deepstream.record.getList(`${this.appConfig.DEEPSTREAM_NAMESPACE}/nodes`);
     nodesList.whenReady(list => {
       if (list.getEntries().includes(dsNodeId)) {

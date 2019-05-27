@@ -47,7 +47,8 @@
     "compare-versions": "3.4.0",
     "@druide/rate-limiter": "1.2.7",
     "bignumber.js": "8.1.1",
-    "pg": "7.9.0"
+    "pg": "7.9.0",
+    "rlp": "2.2.3"
   },
   "devDependencies": {
     "@babel/core": "7.4.0",
