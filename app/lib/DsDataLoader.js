@@ -1,3 +1,6 @@
+import ethonDictionary from './EthonDictionary.js';
+import BlockUtils from './BlockUtils.js';
+
 export default class DsDataLoader {
   constructor(diContainer) {
     this.appConfig = diContainer.appConfig;
@@ -121,8 +124,20 @@ export default class DsDataLoader {
         return this.result.setupNodeData(nodeData, true);
       }
 
-      return this.models.Blocks.getBlock({number: nodeData.lastConfirmations[0].blockNumber, hash: nodeData.lastConfirmations[0].blockHash}).then(lastBlock => {
+      return this.models.Blocks.getBlock({number: nodeData.lastConfirmations[0].blockNumber, hash: nodeData.lastConfirmations[0].blockHash}).then(async lastBlock => {
         nodeData.lastBlock = lastBlock;
+
+        if (nodeData.lastBlock) {
+          if (this.appConfig.NETWORK_ALGO === 'ibft2' && nodeData.lastBlock.extraData) {
+            nodeData.lastBlock.validators = BlockUtils.getIBFT2Validators(nodeData.lastBlock.extraData);
+          }
+
+          if (this.appConfig.NETWORK_ALGO === 'clique') {
+            let validators = await this.models.Validators.get({blockNumber: nodeData.lastBlock.number, blockHash: nodeData.lastBlock.hash});
+            nodeData.lastBlock.validators = (validators && validators.rowLength > 0) ? JSON.parse(validators.rows[0].validators) : [];
+          }
+        }
+
         return this.result.setupNodeData(nodeData, true);
       });
     });
@@ -201,6 +216,24 @@ export default class DsDataLoader {
       record.delete();
       this.prometheusMetrics.ethstats_server_deepstream_requests_total.inc({topic: 'deleteRecord'}, 1, Date.now());
       this.log.debug(`Deepstream record '${recordId}' delete`);
+    });
+  }
+
+  sendValidatorsToDeepstream(validators) {
+    this.log.debug(`Deepstream update 'validators': ${JSON.stringify(validators)}`);
+
+    let nodesList = this.deepstream.record.getList(`${this.appConfig.DEEPSTREAM_NAMESPACE}/nodes`);
+    nodesList.whenReady(list => {
+      list.getEntries().forEach(dsNodeId => {
+        this.getRecord(`${dsNodeId}/nodeData`).whenReady(node => {
+          let nodeData = node.get()[ethonDictionary.nodeData];
+          if (nodeData) {
+            if (validators.includes(nodeData[ethonDictionary.coinbase])) {
+              this.setRecord(`${dsNodeId}/nodeData`, 'nodeData.isValidator', true);
+            }
+          }
+        });
+      });
     });
   }
 }

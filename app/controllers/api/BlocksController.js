@@ -1,4 +1,5 @@
 import AbstractController from './AbstractController.js';
+import BlockUtils from '../../lib/BlockUtils.js';
 
 export default class BlocksController extends AbstractController {
   get(request, response) {
@@ -138,7 +139,7 @@ export default class BlocksController extends AbstractController {
       this.models.Usage.get({nodeName: nodeName, timestampEnd: confirmationTimestamp, order: 'desc', limit: 1})
     ];
 
-    return Promise.all(allPromises).then(results => {
+    return Promise.all(allPromises).then(async results => {
       let nodeData = {
         nodeData: (results[0] && results[0].rowLength > 0) ? results[0].rows[0] : null,
         firstLogin: (results[1] && results[1].rowLength > 0) ? results[1].rows[0] : null,
@@ -152,6 +153,17 @@ export default class BlocksController extends AbstractController {
 
       if (nodeData.lastLogin === null) {
         nodeData.lastLogin = nodeData.firstLogin;
+      }
+
+      if (nodeData.lastBlock) {
+        if (this.appConfig.NETWORK_ALGO === 'ibft2' && nodeData.lastBlock.extraData) {
+          nodeData.lastBlock.validators = BlockUtils.getIBFT2Validators(nodeData.lastBlock.extraData);
+        }
+
+        if (this.appConfig.NETWORK_ALGO === 'clique') {
+          let validators = await this.models.Validators.get({blockNumber: nodeData.lastBlock.number, blockHash: nodeData.lastBlock.hash});
+          nodeData.lastBlock.validators = (validators && validators.rowLength > 0) ? JSON.parse(validators.rows[0].validators) : [];
+        }
       }
 
       nodeData.nodeData.isActive = true;

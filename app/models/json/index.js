@@ -13,7 +13,8 @@ export default diContainer => {
     block_transactions: [],
     block_uncles: [],
     block_confirmations: [],
-    usage: []
+    usage: [],
+    validators: []
   };
 
   Object.keys(modules).forEach(model => {

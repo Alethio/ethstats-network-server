@@ -294,4 +294,54 @@ export default class BlocksController extends AbstractController {
       return responseObject;
     });
   }
+
+  async addValidators(spark, params) {
+    let responseObject = this.lodash.cloneDeep(this.responseObject);
+    let requestValidation = {
+      request: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          blockNumber: {type: 'integer'},
+          blockHash: {type: 'string'},
+          validators: {type: 'array'}
+        },
+        required: ['blockNumber', 'blockHash', 'validators']
+      }
+    };
+
+    let validParams = this.validator.validate(requestValidation.request, params);
+    if (!validParams) {
+      responseObject.success = false;
+      responseObject.errors = this.validatorError.getReadableErrorMessages(this.validator.errors);
+
+      return responseObject;
+    }
+
+    let session = this.session.getAll(spark.id);
+    if (session.isLoggedIn === true) {
+      this.cache.getVar('lastBlockForValidators').then(lastBlockForValidators => {
+        lastBlockForValidators = (lastBlockForValidators === null) ? null : JSON.parse(lastBlockForValidators);
+        if (lastBlockForValidators && lastBlockForValidators.blockNumber === params.blockNumber && lastBlockForValidators.blockHash === params.blockHash) {
+          // do nothing
+        } else {
+          this.log.debug(`[${spark.id}] - DB insert validators => ${JSON.stringify(params)}`);
+
+          this.models.Validators.add(params).then(() => {
+            this.dsDataLoader.sendValidatorsToDeepstream(params.validators);
+          });
+
+          this.cache.setVar('lastBlockForValidators', JSON.stringify({
+            blockNumber: params.blockNumber,
+            blockHash: params.blockHash
+          }), this.appConfig.CACHE_LAST_BLOCK_EXPIRE);
+        }
+      });
+    } else {
+      responseObject.success = false;
+      responseObject.errors.push('Not logged in');
+    }
+
+    return responseObject;
+  }
 }

@@ -1,5 +1,4 @@
 import dictionary from './EthonDictionary.js';
-import BlockUtils from './BlockUtils.js';
 
 export default class Result {
   constructor(diContainer) {
@@ -168,9 +167,9 @@ export default class Result {
           propagationChartData: propagationTimes
         }
       };
-      if (['ibft2', 'clique'].includes(this.appConfig.NETWORK_ALGO) && data.lastBlock.extraData) {
-        let validators = BlockUtils.getValidators(this.appConfig.NETWORK_ALGO, data.lastBlock.extraData);
-        if (validators.includes(returnObject.nodeData.coinbase)) {
+
+      if (['ibft2', 'clique'].includes(this.appConfig.NETWORK_ALGO) && data.lastBlock.validators) {
+        if (data.lastBlock.validators.includes(returnObject.nodeData.coinbase)) {
           returnObject.nodeData.isValidator = true;
         }
       }

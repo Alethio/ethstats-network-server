@@ -165,4 +165,37 @@ export default class AbstractController {
       }
     }
   }
+
+  async getConfig(spark, params) {
+    let responseObject = this.lodash.cloneDeep(this.responseObject);
+    let requestValidation = {
+      request: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          configName: {type: 'string'}
+        },
+        required: ['configName']
+      }
+    };
+
+    let validParams = this.validator.validate(requestValidation.request, params);
+    if (!validParams) {
+      responseObject.success = false;
+      responseObject.errors = this.validatorError.getReadableErrorMessages(this.validator.errors);
+
+      return responseObject;
+    }
+
+    let session = this.session.getAll(spark.id);
+    if (session.isLoggedIn === true) {
+      responseObject.data.push({[params.configName]: this.appConfig[params.configName]});
+      responseObject.dataLength = responseObject.data.length;
+    } else {
+      responseObject.success = false;
+      responseObject.errors.push('Not logged in');
+    }
+
+    return responseObject;
+  }
 }
