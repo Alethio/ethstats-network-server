@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.5.2] - 2019-06-05
+- Add support for validators/signers on POA networks ("ibft2" and "clique" consensus algorithms)
+
 ## [1.5.1] - 2019-05-22
 - Add "clientTimeout" message sent to the client when inactive for more then 3 minutes
 

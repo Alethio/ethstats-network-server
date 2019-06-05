@@ -259,7 +259,9 @@ export default class Server {
       'usage',
       'pong',
       'checkChainData',
-      'getBlocksData'
+      'getBlocksData',
+      'validators',
+      'getConfig'
     ];
     let deprecatedTopics = ['node-ping', 'latency', 'pending'];
     let requestTopics = [
@@ -362,6 +364,16 @@ export default class Server {
       case 'getBlocksData':
         this.controllers.BlocksController.addHistory(spark, message.payload).then(result => {
           this.controllers.AbstractController.clientWrite(spark, 'getBlocksResponse', result);
+        });
+        break;
+      case 'validators':
+        this.controllers.BlocksController.addValidators(spark, message.payload).then(result => {
+          this.controllers.AbstractController.clientWrite(spark, 'validatorsResponse', result);
+        });
+        break;
+      case 'getConfig':
+        this.controllers.AbstractController.getConfig(spark, message.payload).then(result => {
+          this.controllers.AbstractController.clientWrite(spark, 'getConfigResponse', result);
         });
         break;
 

@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS block_confirmations2 (
   "blockHash" varchar,
   "confirmationTimestamp" timestamp,
   "propagationTime" bigint,
-  PRIMARY KEY ("blockNumberPartition",  "blockNumber", "nodeName")
+  PRIMARY KEY ("blockNumberPartition", "blockNumber", "nodeName")
 ) WITH CLUSTERING ORDER BY ("blockNumber" DESC, "nodeName" ASC);
 
 DROP TABLE IF EXISTS usage;
@@ -236,3 +236,12 @@ CREATE TABLE IF NOT EXISTS usage (
   "receivedTimestamp" timestamp,
   PRIMARY KEY ("nodeName", "receivedTimestamp")
 ) WITH CLUSTERING ORDER BY ("receivedTimestamp" DESC);
+
+DROP TABLE IF EXISTS validators;
+CREATE TABLE IF NOT EXISTS validators (
+  "blockNumberPartition" bigint,
+  "blockNumber" bigint,
+  "blockHash" varchar,
+  "validators" varchar,
+  PRIMARY KEY ("blockNumberPartition", "blockNumber", "blockHash")
+) WITH CLUSTERING ORDER BY ("blockNumber" DESC);

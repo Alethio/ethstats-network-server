@@ -87,6 +87,7 @@ In the table bellow you can find the list of topics on which the `server` is lis
 | [recoverNode](#recoverNode)             | [registerNodeResponse](#registerNodeResponse)             |
 | [connection](#connection)               | [connectionResponse](#connectionResponse)                 |
 | [block](#block)                         | [blockResponse](#blockResponse)                           |
+| [validators](#validators)               | [validatorsResponse](#validatorsResponse)                 |
 | [sync](#sync)                           | [syncResponse](#syncResponse)                             |
 | [stats](#stats)                         | [statsResponse](#statsResponse)                           |
 | [usage](#usage)                         | [usageResponse](#usageResponse)                           |
@@ -407,7 +408,7 @@ On successful connection message sent to the server, the `success` attribute is 
 
 Example using wscat:
 ```bash
-> {"topic":"logout","payload":{}}
+> {"topic":"connection","payload":{"isConnected": true}}
 < {"topic":"connectionResponse","payload":{"success":true,"data":[],"dataLength":0,"warnings":[],"errors":[]}}
 ```
 
@@ -503,6 +504,58 @@ Example using wscat:
 ```bash
 > {"topic":"block","payload":{"author":"0xea674fdde714fd979de3edf0f56aa9716b898ec8","difficulty":"1819235038152977","extraData":"0x505059452d65746865726d696e652d61736961312d34","gasLimit":8000000,"gasUsed":4900294,"hash":"0x1696c53da4a8cd439ed6833b990edcb36269e2b7b98144fa69e054a88c199ef6","logsBloom":"0xc04c0c8602c5001a20005202000008a282a5818f075000185112a04001581188401c4c00e818008021022cea5440480e82402412088040e15808610000b1412804802701086004280813000c2424087d00190101028001010e19c8509013100000b04140132a4280852a60500002884a0862900818840058401119914644050a080002040050d02c800003a58040080c3b120020e5cd0e201442602814044130068184100040800a9a81209cc1f8140e01640600448980a01910d1001b28084010884c12580e008600c14468116803228612a805412a901421880a400112a00b201124a0a1e18080100052800c023074918b8084a000069122a8910232a02482","miner":"0xea674fdde714fd979de3edf0f56aa9716b898ec8","mixHash":"0xa588eaeaf5186bf07d1ed9027b27fe50acb9b25d3ca6beeb5e573e40f6a6a0d2","nonce":"0xa2fae7a6696b2609","number":7642556,"parentHash":"0x6823fd5ca071a9c90d05515cb3bcc618855c91fd935bb1dd31af5445d3c19bf9","receiptsRoot":"0xc80ec6684fb97e6e02b536a4b4fd5b701c84e8bfdb9c874c818640773d80bbd5","sealFields":["0xa0a588eaeaf5186bf07d1ed9027b27fe50acb9b25d3ca6beeb5e573e40f6a6a0d2","0x88a2fae7a6696b2609"],"sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","size":20036,"stateRoot":"0x4e80a434a20fc9e0ed0ef2b8d2ba2958201b752e1cf76dae98a5d4710de19f93","timestamp":1556276014,"totalDifficulty":"9.969850712079172712442e+21","transactions":["0xae00f7e686c0d1ab05520d455533d47a6437516e2b6ab6b4e7278f83efc7f3b6","0x38a4e2d77cee0f19f4a3e8002b2ba3a456ce3db27e5ca2fd8d440c8a8747fb5c","0xfe8e653259d36230d48ffab1d3dc0c292d8c02eb5920233950e9b19556dafe5e","0xf4d54525d369df1c05288f755eb8da1370dad15db8b3dab008d4ad7b0ff385b3","0xb07118cb0d8d58da504ae0673da737247a0f38b22def30a5d3a14f907272457e"],"transactionsRoot":"0x1430120da41716edf2086b9b744300c3a42ab07f89e536daf80f61f365f17247","uncles":[]}}
 < {"topic":"blockResponse","payload":{"success":true,"data":[],"dataLength":0,"warnings":[],"errors":[]}}
+```
+
+---
+
+#### validators
+If the node is running on a POA type network, for every block sent must also send the validators / signers for it.
+This topic listens for validators messages. 
+
+Payload attributes: 
+
+| Attribute     | Type            | Mandatory         | Description             |
+|---------------|-----------------|-------------------|-------------------------|
+| blockNumber   | integer         | yes               | The block number.       |
+| blockHash     | string          | yes               | The block hash.         |
+| validators    | array           | yes               | An array of strings representing the validators/signers in the block. |
+
+```json
+{
+  "topic": "validators",
+  "payload": {
+    "blockNumber": 716864,
+    "blockHash": "0x94dcc3fcb2c7b10af9c185598ecb6e8d4439510c33d6d15e2abbc4626c51d5aa",
+    "validators": [
+      "0x000000568b9b5a365eaa767d42e74ed88915c204",
+      "0x22ea9f6b28db76a7162054c05ed812deb2f519cd",
+      "0x4c2ae482593505f0163cdefc073e81c63cda4107",
+      "0x631ae5c534fe7b35aaf5243b54e5ac0cfc44e04c"
+    ]
+  }
+}
+```
+
+#### validatorsResponse
+On successful validators message sent to the server, the `success` attribute is set to true and the data attribute will be empty in the response payload.
+
+```json
+{
+  "topic": "validatorsResponse",
+  "payload": {
+    "success": true,
+    "data": [],
+    "dataLength": 0,
+    "warnings": [],
+    "errors": []
+  }
+}
+```
+
+Example using wscat:
+```bash
+> {"topic":"validators","payload":{"blockNumber":716864,"blockHash":"0x94dcc3fcb2c7b10af9c185598ecb6e8d4439510c33d6d15e2abbc4626c51d5aa","validators":["0x000000568b9b5a365eaa767d42e74ed88915c204","0x22ea9f6b28db76a7162054c05ed812deb2f519cd","0x4c2ae482593505f0163cdefc073e81c63cda4107","0x631ae5c534fe7b35aaf5243b54e5ac0cfc44e04c"]}}
+< {"topic":"validatorsResponse","payload":{"success":true,"data":[],"dataLength":0,"warnings":[],"errors":[]}}
 ```
 
 ---

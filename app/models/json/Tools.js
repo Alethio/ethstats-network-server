@@ -14,7 +14,8 @@ export default class Tools extends AbstractModel {
       block_transactions: [],
       block_uncles: [],
       block_confirmations: [],
-      usage: []
+      usage: [],
+      validators: []
     };
 
     if (truncateNodesTable) {

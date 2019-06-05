@@ -1,5 +1,4 @@
 import dictionary from './EthonDictionary.js';
-import Long from 'long';
 
 export default class Result {
   constructor(diContainer) {
@@ -75,6 +74,10 @@ export default class Result {
       nodeBlockData: null,
       nodeUsage: null
     };
+
+    if (['ibft2', 'clique'].includes(this.appConfig.NETWORK_ALGO)) {
+      returnObject.nodeData.isValidator = false;
+    }
 
     if (data && data.firstLogin && data.lastLogin) {
       let onlineTimePercent = 0;
@@ -164,6 +167,12 @@ export default class Result {
           propagationChartData: propagationTimes
         }
       };
+
+      if (['ibft2', 'clique'].includes(this.appConfig.NETWORK_ALGO) && data.lastBlock.validators) {
+        if (data.lastBlock.validators.includes(returnObject.nodeData.coinbase)) {
+          returnObject.nodeData.isValidator = true;
+        }
+      }
     }
 
     if (data && data.lastUsage) {

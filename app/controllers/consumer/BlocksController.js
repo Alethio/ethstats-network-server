@@ -1,4 +1,5 @@
 import AbstractController from './AbstractController.js';
+import BlockUtils from '../../lib/BlockUtils.js';
 
 export default class BlocksController extends AbstractController {
   add(params, callback) {
@@ -206,6 +207,10 @@ export default class BlocksController extends AbstractController {
       if (setAsLastBlock) {
         this._setLastBlock(newBlockParams);
         this._sendLastBlockToDeepstream(newBlockParams);
+
+        if (this.appConfig.NETWORK_ALGO === 'ibft2') {
+          this.dsDataLoader.sendValidatorsToDeepstream(BlockUtils.getIBFT2Validators(params));
+        }
       }
 
       if (sendStatisticsToDeepstream) {

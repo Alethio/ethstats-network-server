@@ -202,3 +202,12 @@ CREATE TABLE IF NOT EXISTS public.usage
   "receivedTimestamp" timestamp,
   PRIMARY KEY ("nodeName", "receivedTimestamp")
 );
+
+DROP TABLE IF EXISTS public.validators;
+CREATE TABLE IF NOT EXISTS public.validators
+(
+  "blockNumber" bigint,
+  "blockHash" text,
+  "validators" text,
+  PRIMARY KEY ("blockNumber", "blockHash")
+);
