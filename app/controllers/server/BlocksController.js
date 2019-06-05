@@ -322,7 +322,7 @@ export default class BlocksController extends AbstractController {
     if (session.isLoggedIn === true) {
       this.cache.getVar('lastBlockForValidators').then(lastBlockForValidators => {
         lastBlockForValidators = (lastBlockForValidators === null) ? null : JSON.parse(lastBlockForValidators);
-        if (lastBlockForValidators && lastBlockForValidators.blockNumber === params.blockNumber && lastBlockForValidators.blockHash === params.blockHash) {
+        if (lastBlockForValidators && ((params.blockNumber - lastBlockForValidators.blockNumber < 0) || (lastBlockForValidators.blockNumber === params.blockNumber && lastBlockForValidators.blockHash === params.blockHash))) {
           // do nothing
         } else {
           this.log.debug(`[${spark.id}] - DB insert validators => ${JSON.stringify(params)}`);
