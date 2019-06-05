@@ -7,21 +7,27 @@ export default class Validators extends AbstractModel {
   }
 
   async add(params) {
-    return this.redis.get(this.table).then(data => {
-      let newData = (data === null) ? [] : JSON.parse(data);
-      let tableLength = newData.push({
-        blockNumber: params.blockNumber,
-        blockHash: params.blockHash,
-        validators: JSON.stringify(params.validators)
+    let validators = await this.get({blockNumber: params.blockNumber, blockHash: params.blockHash});
+
+    if (validators.rowLength === 0) {
+      return this.redis.get(this.table).then(data => {
+        let newData = (data === null) ? [] : JSON.parse(data);
+        let tableLength = newData.push({
+          blockNumber: params.blockNumber,
+          blockHash: params.blockHash,
+          validators: JSON.stringify(params.validators)
+        });
+
+        if (tableLength > this.appConfig.LITE_DB_LIMIT) {
+          newData.shift();
+        }
+
+        this.redis.set(this.table, JSON.stringify(newData));
+        return newData.length;
       });
+    }
 
-      if (tableLength > this.appConfig.LITE_DB_LIMIT) {
-        newData.shift();
-      }
-
-      this.redis.set(this.table, JSON.stringify(newData));
-      return newData.length;
-    });
+    return false;
   }
 
   /*

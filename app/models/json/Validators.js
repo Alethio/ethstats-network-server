@@ -7,17 +7,24 @@ export default class Validators extends AbstractModel {
   }
 
   async add(params) {
-    let tableLength = this.jsonDB[this.table].push({
-      blockNumber: params.blockNumber,
-      blockHash: params.blockHash,
-      validators: JSON.stringify(params.validators)
-    });
+    let validators = await this.get({blockNumber: params.blockNumber, blockHash: params.blockHash});
+    let result = false;
 
-    if (tableLength > this.appConfig.LITE_DB_LIMIT) {
-      this.jsonDB[this.table].shift();
+    if (validators.rowLength === 0) {
+      let tableLength = this.jsonDB[this.table].push({
+        blockNumber: params.blockNumber,
+        blockHash: params.blockHash,
+        validators: JSON.stringify(params.validators)
+      });
+
+      if (tableLength > this.appConfig.LITE_DB_LIMIT) {
+        this.jsonDB[this.table].shift();
+      }
+
+      result = this.jsonDB[this.table].length;
     }
 
-    return this.jsonDB[this.table].length;
+    return result;
   }
 
   /*
@@ -28,7 +35,7 @@ export default class Validators extends AbstractModel {
    * limit
    * countOnly
    */
-  get(params) {
+  async get(params) {
     if (this.lodash.isEmpty(params)) {
       return null;
     }
