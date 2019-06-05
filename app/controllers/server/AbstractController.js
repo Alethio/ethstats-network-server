@@ -187,6 +187,15 @@ export default class AbstractController {
       return responseObject;
     }
 
+    let availableConfigs = ['NETWORK_ALGO'];
+
+    if (!availableConfigs.includes(params.configName)) {
+      responseObject.success = false;
+      responseObject.errors.push('Config not found');
+
+      return responseObject;
+    }
+
     let session = this.session.getAll(spark.id);
     if (session.isLoggedIn === true) {
       responseObject.data.push({[params.configName]: this.appConfig[params.configName]});
