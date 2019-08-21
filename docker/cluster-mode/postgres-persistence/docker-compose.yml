@@ -35,7 +35,7 @@ services:
       - zookeper1
   deepstream:
     container_name: ethstats-network-deepstream
-    image: deepstreamio/deepstream.io:latest
+    image: deepstreamio/deepstream.io:3.2.2
     restart: always
     ports:
       - 127.0.0.1:6020:6020
