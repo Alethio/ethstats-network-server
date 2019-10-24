@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ethstats.fullname" . }}-dashboard
+  labels:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: dashboard
+    helm.sh/chart: {{ include "ethstats.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  NETSTATS_API_URL: "self"
+  DS_URL: "self"
+  DS_USER: "frontend"
+  DS_PASS: ""
+  DS_NAMESPACE: "ethstats/"
+  #EXPLORER_URL: "https://aleth.io"
+  PRIVACY_POLICY: ""
+  NETWORK_ALGO: "ethash"
+  GOOGLE_ANALYTICS_ID: ""
+  HOTJAR_ID: ""
+
+  # Overrides from values right here..
+  {{- with .Values.dashboard.config }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ethstats.fullname" . }}-dashboard-nginx
+  labels:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: dashboard
+    helm.sh/chart: {{ include "ethstats.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  default.conf: |-
+    server {
+        listen       80;
+        location /health-check {
+            return 200;
+        }
+        location /deepstream {
+          proxy_pass http://{{ .Release.Name }}-deepstream-ws:6020;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "Upgrade";
+        }
+        location ~ ^/(nodes|blocks)/ {
+          proxy_pass http://{{ include "ethstats.fullname" . }}-server-api;
+          proxy_http_version 1.1;
+        }
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html index.htm;
+            try_files $uri /index.html =404;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/share/nginx/html;
+        }
+    }
+
+  # Overrides from values right here..
+  {{- with .Values.dashboard.nginxConfig }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+

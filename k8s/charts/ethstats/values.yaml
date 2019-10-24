@@ -1,0 +1,137 @@
+nameOverride: ""
+fullnameOverride: "" 
+server:
+  replicaCount: 1
+  image:
+    repository: alethio/ethstats-network-server
+    tag: v1.5.2
+    pullPolicy: IfNotPresent
+  command: ["./bin/app.js"]
+  args: ["-v"]
+
+  config:
+    NETWORK_ID: "5"
+    NETWORK_NAME: "private"
+    DEEPSTREAM_SERVER_USER: server-producer
+    DEEPSTREAM_SERVER_PASSWORD: hk24lVAla9J1k8Aa 
+    DEEPSTREAM_CONSUMER_USER: server-consumer
+    DEEPSTREAM_CONSUMER_PASSWORD: Wheyozek6J2W3aLp
+
+    # We use lite mode, with redis persistence
+    LITE: "1"
+    LITE_DB_PERSIST: "1"
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  service:
+    type: ClusterIP
+    port: 80
+
+dashboard:
+  image:
+    repository: alethio/ethstats-network-dashboard
+    tag: latest
+    pullPolicy: Always
+  config:
+    # "self" - uses the nginx rev proxy in this deployment.
+    # Use URLs if exposing these servics by other means
+    NETSTATS_API_URL: "self"
+    DS_URL: "self"
+
+    DS_USER: "frontend"
+    DS_PASS: "r2JddfIHCPcXOI3x"
+    DS_NAMESPACE: "ethstats/"
+    #EXPLORER_URL: "https://aleth.io"
+    PRIVACY_POLICY: ""
+    #NETWORK_ALGO: "ethash"
+    GOOGLE_ANALYTICS_ID: ""
+    HOTJAR_ID: ""
+
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: false
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: chart-example.local
+        paths: []
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+deepstream:
+  enabled: true
+  config:
+    config.yml: |-
+      auth:
+         type: file
+         options:
+           path: ./users.yml
+           hash: 'sha256'
+           iterations: 100
+           keyLength: 64
+
+    ### These passwords are generated using the script in ./scripts/generatePassword
+    ### The script provides both the plaintext values to use in 
+    ### dashboard -> DS_USER/DS_PASS and server -> DEEPSTREAM_*
+    #
+    ### There are defaults in place, but if you want to UP your security, please go ahead and generate fresh ones
+    users.yml: |-
+      server-producer:
+        password: "tKXBVAEErzBc5lc/9hsYk1dcPeqrjjTaFsHZmpkb7y4KW+L2mqsJpAhN/EeHQLlZPwlsiYsc1RzxoAileiVhBQ==CvEfbMV9vj+9331HxdW0LQ=="
+        serverData:
+          role: "write"
+      server-consumer:
+        password: "lOOhwZldm8XKoWWYWDTvcIPnf1HgXFsqeTbpDB+khj6nMAD5Jizz6g5j9etciIerrk5iG+aaw8STE6Sdi2ZG2Q==/tDz/2NtkBjCG39Ow4e2rg=="
+        serverData:
+          role: "write"
+      frontend:
+        password: "hOYpWbNbQAWSJkPhznRoRYKCswC9ecIzICJm1hKBf2FWzKwVg7PCAYZS1gZZi0bH34u4JfOD+JyAyr7ZRtpS4Q==18oJJ2/qv2RLg/5EbzzyjQ=="
+        serverData:
+          role: "read"
+
+    permissions.yml: |-
+      presence:
+        "*":
+          allow: false
+      record:
+        "*":
+          #read: true
+          read: "user.data.role == 'read' || user.data.role == 'write'"
+          #listen: true
+          listen: "user.data.role == 'read' || user.data.role == 'write'"
+          # We need to allow all creates because DS tries to create a record if you get() one that doesn't exist
+          # https://deepstreamhub.com/docs/client-js/datasync-record/
+          #create: true
+          create: "user.data.role == 'write'"
+          write: "user.data.role == 'write'"
+          delete: "user.data.role == 'write'"
+      event:
+        "*":
+          publish: "user.data.role == 'write'"
+          subscribe: "user.data.role == 'read' || user.data.role == 'write'"
+          listen: "user.data.role == 'read' || user.data.role == 'write'"
+      rpc:
+        "*":
+          provide: "user.data.role == 'write'"
+          request: "user.data.role == 'read' || user.data.role == 'write'"
+
+redis:
+  enabled: true
+  usePassword: false
+  cluster:
+    enabled: false
+
