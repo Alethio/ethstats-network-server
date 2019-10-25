@@ -1,0 +1,157 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ethstats.fullname" . }}-backend
+  labels:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    helm.sh/chart: {{ include "ethstats.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  # Q: Why aren't th3000
+  # A: to allow default interpolation of release name
+  ENVIRONMENT: private
+
+  TZ: UTC
+
+  NETWORK_ID: "1"
+  NETWORK_NAME: mainnet
+  NETWORK_ALGO: ethash
+
+  APP_HOST: {{ include "ethstats.fullname" . }}-server-api
+  APP_PORT: "3000"
+  APP_NAME: server
+
+  SERVER_PING_INTERVAL: "30"
+  SERVER_WS_TIMEOUT: "180"
+
+  LITE: "1"
+  LITE_API_PORT: "3030"
+  LITE_DB_LIMIT: "3000"
+  LITE_DB_PERSIST: "0"
+
+  WS_REQUEST_RATE_LIMIT: "10000"
+  WS_REQUEST_RATE_INTERVAL: "300000"
+
+  CLIENT_MIN_VERSION: "2.5.0"
+  CLIENT_LAST_V1_VERSION: "0.1.1"
+
+  LOG_SHOW_DATETIME: "1"
+  LOG_SHOW_INFOS: "0"
+  LOG_SHOW_WARNINGS: "1"
+  LOG_SHOW_ERRORS: "1"
+  LOG_SHOW_DEBUGS: "0"
+  LOG_SHOW_AS_JSON: "0"
+
+  DB_TYPE: cassandra
+
+  CASSANDRA_HOSTS: localhost
+  CASSANDRA_LOCAL_DATA_CENTER: datacenter1
+  CASSANDRA_KEYSPACE: ethstats
+
+  PGHOST: localhost
+  PGPORT: "5432"
+  PGDATABASE: postgres
+  PGUSER: postgres
+  PGPASSWORD: 
+
+  REDIS_HOST: {{ .Release.Name }}-redis-master
+  REDIS_PORT: "6379"
+  REDIS_NAMESPACE: ethstats
+
+  DEEPSTREAM_HOST: {{ .Release.Name }}-deepstream-ws
+  DEEPSTREAM_PORT: "6020"
+  DEEPSTREAM_NAMESPACE: ethstats
+  DEEPSTREAM_CLEANUP_INTERVAL: "300"
+  DEEPSTREAM_NODE_ACTIVITY_RETENTION: "7200"
+  DEEPSTREAM_SERVER_USER: server-producer
+  DEEPSTREAM_SERVER_PASSWORD: ""
+  DEEPSTREAM_CONSUMER_USER: server-consumer
+  DEEPSTREAM_CONSUMER_PASSWORD: ""
+
+  CACHE_LAST_BLOCK_EXPIRE: "86400"
+  CACHE_KOHERA_LAST_INTERVAL_EXPIRE: "86400"
+
+  CHARTS_MAX_BLOCKS_HISTORY: "2500"
+  CHARTS_MAX_BINS: "100"
+  CHARTS_MAX_BLOCKS_FOR_BLOCK_TIME_AVG: "64"
+  CHARTS_NODE_BLOCK_PROPAGATION_MAX_BINS: "40"
+  CHARTS_UNCLE_COUNT_MAX_BLOCKS_PER_BIN: "25"
+  CHARTS_BLOCK_PROPAGATION_HISTOGRAM_MAX_CONFIRMATIONS_HISTORY: "1000"
+  CHARTS_BLOCK_PROPAGATION_HISTOGRAM_MAX_BINS: "40"
+  CHARTS_BLOCK_PROPAGATION_HISTOGRAM_MIN_RANGE: "0"
+  CHARTS_BLOCK_PROPAGATION_HISTOGRAM_MAX_RANGE: "10"
+  CHARTS_BLOCK_MINERS_MAX_BLOCKS_HISTORY: "40"
+
+  KAFKA_HOST: localhost:9092
+  KAFKA_TOPIC_BLOCKS_LATEST: ethstats-blocks-latest
+  KAFKA_TOPIC_BLOCKS_ANCIENT: ethstats-blocks-ancient
+  KAFKA_ERROR_RATE_LIMIT: "3"
+  KAFKA_ERROR_RATE_INTERVAL: "90000"
+  CONSUMER_TOPIC: 
+
+  METRICS_ENABLED: "1"
+  METRICS_PORT: "8888"
+  METRICS_DEFAULT_TIMEOUT: "5"
+
+  RECOVERY_HASH_EXPIRE: "1800"
+
+  CHAIN_DETECTION_ENABLED: "0"
+  CHAIN_DETECTION_RATE_ON_BLOCK: "30"
+  CHAIN_DETECTION_RATE_ON_SYNC: "1000"
+  CHAIN_DETECTION_LAST_BLOCK_MAX_DIFF: "3"
+  CHAIN_DETECTION_CLIENT_RESPONSE_MAX_DIFF: "3"
+
+  KOHERA_MAX_BLOCK_INTERVAL: "5000"
+  KOHERA_CHECK_CONSISTENCY_INTERVAL: "3600"
+  KOHERA_DB_REQUEST_TIMEOUT: "100"
+  KOHERA_API_REQUEST_TIMEOUT: "100"
+  KOHERA_QUEUE_REQUEST_TIMEOUT: "50"
+
+  INFURA_URL: infura.io/v3
+  INFURA_PROJECT_ID: ""
+  INFURA_PROJECT_SECRET: ""
+
+  ETHSTATS_BLOB_API_URL: https://blob-api.ethstats.io/v1
+  ETHSTATS_BLOB_API_KEY: ""
+
+  MAILGUN_DOMAIN: ""
+  MAILGUN_API_KEY: ""
+
+  # Overrides from values right here..
+  {{- with .Values.server.config }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ethstats.fullname" . }}-backend-files
+  labels:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    helm.sh/chart: {{ include "ethstats.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  # This must match the NETWORK_NAME above
+  ClientConfigs.private.js: |-
+    const clientConfigs = {
+      serverUrl: {
+        private: {
+          networkName: 'private',
+          url: `http://server`
+        }
+      },
+      dashboardUrl: {
+        private: {
+          networkName: 'private',
+          url: `http://dashboard`
+        }
+      },
+      privacyPolicyUrl: `http://dashboard/privacy-policy`
+    };
+
+    export default clientConfigs;
+

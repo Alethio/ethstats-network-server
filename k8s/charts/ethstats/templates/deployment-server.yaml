@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ethstats.fullname" . }}-server
+  labels:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: server
+    helm.sh/chart: {{ include "ethstats.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.server.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "ethstats.name" . }}
+      app.kubernetes.io/component: server
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-backend.yaml") . | sha256sum }}
+      labels:
+        app.kubernetes.io/name: {{ include "ethstats.name" . }}
+        app.kubernetes.io/component: server
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
+          imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ include "ethstats.fullname" . }}-backend
+          command:
+            {{- toYaml .Values.server.command | nindent 12 }}
+          args:
+            {{- toYaml .Values.server.args | nindent 12 }}
+          ports:
+            # Ethstats-cli connects here
+            - name: ws
+              containerPort: 3000
+              protocol: TCP
+            # Dashboard connects here
+            - name: api
+              containerPort: 3030
+              protocol: TCP
+            # Prometheus connects here
+            - name: metrics
+              containerPort: 8888
+              protocol: TCP
+          #livenessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: http
+          #readinessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: http
+          resources:
+            {{- toYaml .Values.server.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+      {{- with .Values.server.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.server.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.server.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "ethstats.fullname" . }}-backend-files

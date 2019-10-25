@@ -1,0 +1,49 @@
+# Service exposing the HTTP api comms with the dashboard
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ethstats.fullname" . }}-server-api
+  labels:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: server
+    helm.sh/chart: {{ include "ethstats.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: {{ .Values.server.service.type }}
+  ports:
+    - port: {{ .Values.server.service.port }}
+      targetPort: api
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: {{ .Release.Name }}
+
+---
+
+# Service exposing Websockets to comm w/ ethstats-cli
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ethstats.fullname" . }}-server-ws
+  labels:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: server
+    helm.sh/chart: {{ include "ethstats.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: {{ .Values.server.service.type }}
+  ports:
+    - port: {{ .Values.server.service.port }}
+      targetPort: ws
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: {{ .Release.Name }}

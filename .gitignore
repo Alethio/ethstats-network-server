@@ -38,3 +38,5 @@ dist
 # Client configs
 config/ClientConfigs.*.js
 !config/ClientConfigs.sample.js
+
+k8s/charts/packed

@@ -27,6 +27,16 @@ jobs:
         name: Trigger DockerHub
         command: ./triggerDockerHub.sh
 
+  publishHelmChart:
+    docker:
+    - image: valercara/helm-alpine:latest
+    working_directory: ~/repo
+    steps:
+    - checkout
+    - run:
+      name: Publish helm charts
+      command: ./k8s/charts/publish
+
 workflows:
   version: 2
   deploy:

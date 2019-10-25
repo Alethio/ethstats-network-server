@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+if [ "$1" == "--force" ]; then
+	pushArgs="--force"
+else 
+	pushArgs="--ignore-if-exists"
+fi
+
+REPO=s3://alethio-helm-charts
+CHARTS=$(dirname "$BASH_SOURCE")/
+CHARTS_PACKED=$(dirname "$BASH_SOURCE")/packed
+
+pushChart() {
+	echo "*** Checking updates & pushing chart '$1'"
+	helm s3 push $pushArgs "$1" alethio-helm-charts
+}
+
+mkdir -p ${CHARTS_PACKED}
+
+find ${CHARTS} -name Chart.yaml | xargs -n1 dirname | xargs -n1 helm package -d ${CHARTS_PACKED}
+helm repo index --merge ${CHARTS_PACKED}/index.yaml ${CHARTS_PACKED}
+
+helm repo add alethio-helm-charts ${REPO}
+
+for chart in $(find ${CHARTS_PACKED} -maxdepth 1 -name \*.tgz); do
+	pushChart $chart
+done
+
+echo -e "*** All done!"
+

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ethstats.fullname" . }}-dashboard
+  labels:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: dashboard
+    helm.sh/chart: {{ include "ethstats.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: {{ .Values.dashboard.service.type }}
+  ports:
+    - port: {{ .Values.dashboard.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "ethstats.name" . }}
+    app.kubernetes.io/component: dashboard
+    app.kubernetes.io/instance: {{ .Release.Name }}
