@@ -1,3 +1,6 @@
+# ARCHIVED
+## Alethio is no longer operating so the software stack offered here is no longer maintained. Feel free to fork and continue if anything looks useful.
+
 # ethstats-network-server
 
 > EthStats - Server
